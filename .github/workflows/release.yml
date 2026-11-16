@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
 
 jobs:
   package:
@@ -15,10 +15,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: 태그가 manifest 버전과 같은지 확인
+        run: node -e "const version=require('./manifest.json').version; if (process.env.GITHUB_REF_NAME!==version) { console.error('태그는 '+version+' 이어야 해요. v 는 붙이지 않아요.'); process.exit(1); }"
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: mkdir -p dist && zip -j dist/labsidian-${GITHUB_REF_NAME}.zip main.js manifest.json styles.css
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/labsidian-${GITHUB_REF_NAME}.zip
+          files: |
+            main.js
+            manifest.json
+            styles.css

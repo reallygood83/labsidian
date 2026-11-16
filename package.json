@@ -30,7 +30,6 @@
   "devDependencies": {
     "@eslint/js": "9.39.1",
     "@firebase/rules-unit-testing": "^4.0.1",
-    "@rollup/rollup-linux-x64-gnu": "^4.52.5",
     "@types/node": "22.19.3",
     "esbuild": "0.25.12",
     "eslint": "9.39.1",

@@ -247,7 +247,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
 
   private team(root: HTMLElement): void {
     const steps = root.createDiv({ cls: "lab-card" });
-    steps.createEl("h3", { text: "팀 서고 만들기" });
+    new Setting(steps).setName("팀 서고 만들기").setHeading();
     setupSteps(this.plugin.settings.firebaseProjectId).forEach((step, index) => {
       const row = steps.createDiv({ cls: "lab-row" });
       row.createSpan({ text: `${index + 1}. ${step.title}` });

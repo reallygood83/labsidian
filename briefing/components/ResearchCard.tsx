@@ -1,33 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { unlockResearchNote } from "../../packages/shared/lock";
 import type { ResearchNote } from "../../packages/types/research-note";
 import { OpenInObsidian } from "./OpenInObsidian";
-
-const storageKey = (id: string) => `labsidian-open:${id}`;
 
 export function ResearchCard({ note }: { note: ResearchNote }) {
   const [opened, setOpened] = useState<ResearchNote | null>(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem(storageKey(note.source_id));
-    if (!saved) return;
-    try {
-      setOpened(JSON.parse(saved) as ResearchNote);
-    } catch {
-      sessionStorage.removeItem(storageKey(note.source_id));
-    }
-  }, [note.source_id]);
-
   const shown = opened ?? note;
   async function unlock(): Promise<void> {
     setError("");
     try {
       const next = await unlockResearchNote(note, password);
-      sessionStorage.setItem(storageKey(note.source_id), JSON.stringify(next));
       setOpened(next);
       setPassword("");
     } catch (caught) {
@@ -77,7 +64,7 @@ export function ResearchCard({ note }: { note: ResearchNote }) {
         ) : null}
         <OpenInObsidian sourceId={note.source_id} />
       </div>
-      {shown.owner_email ? <p className="mt-2 text-xs text-lab-text-faint">{shown.owner_email}</p> : null}
+      {shown.display_name ? <p className="mt-2 text-xs text-lab-text-faint">{shown.display_name}</p> : null}
     </article>
   );
 }

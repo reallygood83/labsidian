@@ -2,7 +2,7 @@ import type { ResearchNote } from "../../packages/types/research-note";
 import { buildMarkdown, renderFilename } from "../note/build";
 import type { LabsidianSettings } from "../settings";
 import type { SearchHit } from "../sources/types";
-import { localIsoDate } from "../text";
+import { localIsoDate, yamlString } from "../text";
 
 export interface MadeNote {
   note: ResearchNote;
@@ -69,7 +69,8 @@ export function makeNote(input: {
     lock_ciphertext: "",
     locked_chunks: [],
   };
-  const markdown = buildMarkdown(note, body, input.settings.fields, input.warnings);
+  let markdown = buildMarkdown(note, body, input.settings.fields, input.warnings);
+  if (input.hit.doi) markdown = markdown.replace(/^---\r?\n/, `---\ndoi: ${yamlString(input.hit.doi)}\n`);
   return {
     note,
     markdown,

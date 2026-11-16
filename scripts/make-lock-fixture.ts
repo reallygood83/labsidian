@@ -1,4 +1,6 @@
 import { writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { lockResearchNote } from "../packages/shared/lock";
 import type { ResearchNote } from "../packages/types/research-note";
 
@@ -38,5 +40,6 @@ const note: ResearchNote = {
 };
 
 const locked = await lockResearchNote(note, "labsidian", false);
-await writeFile("/workspace/briefing/public/lock-fixture.json", JSON.stringify(locked));
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+await writeFile(join(root, "briefing/public/lock-fixture.json"), JSON.stringify(locked));
 console.log("fixture ready");

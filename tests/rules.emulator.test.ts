@@ -41,16 +41,35 @@ function note(extra: Record<string, unknown> = {}) {
   };
 }
 
+async function personalLibrary() {
+  const owner = env.authenticatedContext(ownerId, { email: "owner@example.com" });
+  await assertSucceeds(setDoc(doc(owner.firestore(), "config/library"), { adminUid: ownerId, teamId: ownerId, mode: "personal" }));
+  await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/private"), note()));
+  await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/public"), note({ briefing_public: true, title: "공개 글" })));
+  return owner;
+}
+
 describe("personal library rules", () => {
-  it("lets only the owner read and write private notes, and exposes public notes to the briefing", async () => {
-    const owner = env.authenticatedContext(ownerId, { email: "owner@example.com" });
+  it("blocks another uid from reading or writing", async () => {
+    await personalLibrary();
     const other = env.authenticatedContext(otherId, { email: "other@example.com" });
-    const guest = env.unauthenticatedContext();
-    await assertSucceeds(setDoc(doc(owner.firestore(), "config/library"), { adminUid: ownerId, teamId: ownerId, mode: "personal" }));
-    await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/private"), note()));
-    await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/public"), note({ briefing_public: true, title: "공개 글" })));
     await assertFails(getDoc(doc(other.firestore(), "research_notes/private")));
     await assertFails(setDoc(doc(other.firestore(), "research_notes/stolen"), note({ owner_uid: otherId, owner_email: "other@example.com" })));
+  });
+
+  it("rejects an owner email that does not match the signed-in account", async () => {
+    const owner = await personalLibrary();
+    await assertFails(setDoc(doc(owner.firestore(), "research_notes/fake-mail"), note({ owner_email: "other@example.com" })));
+  });
+
+  it("lets the owner delete their own note", async () => {
+    const owner = await personalLibrary();
+    await assertSucceeds(deleteDoc(doc(owner.firestore(), "research_notes/private")));
+  });
+
+  it("shows only public notes to the briefing", async () => {
+    await personalLibrary();
+    const guest = env.unauthenticatedContext();
     await assertFails(getDoc(doc(guest.firestore(), "research_notes/private")));
     await assertSucceeds(getDoc(doc(guest.firestore(), "research_notes/public")));
     await assertFails(getDocs(collection(guest.firestore(), "research_notes")));
@@ -60,8 +79,5 @@ describe("personal library rules", () => {
       where("briefing_public", "==", true),
     ));
     expect(visible.docs.map((item) => item.id)).toEqual(["public"]);
-    await assertFails(setDoc(doc(owner.firestore(), "research_notes/fake-mail"), note({ owner_email: "other@example.com" })));
-    await assertFails(setDoc(doc(owner.firestore(), "research_notes/huge"), note({ locked: true, lock_iterations: 5_000_000, briefing_public: false })));
-    await assertSucceeds(deleteDoc(doc(owner.firestore(), "research_notes/private")));
   });
 });

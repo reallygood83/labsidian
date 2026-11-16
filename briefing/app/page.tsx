@@ -41,7 +41,7 @@ export default async function BriefingPage({ searchParams }: { searchParams: Pro
   const selected = params.source ? week.filter((note) => note.source === params.source) : week;
   const sources = [...new Set(week.map((note) => note.source))];
   const keywords = top(week.flatMap((note) => note.keywords));
-  const people = top(week.map((note) => note.owner_email).filter(Boolean));
+  const people = top(week.map((note) => note.display_name).filter(Boolean));
   const delta = week.length - previous.length;
   return (
     <main className="mx-auto grid max-w-6xl gap-6 p-6 min-[900px]:grid-cols-[1fr_300px]">

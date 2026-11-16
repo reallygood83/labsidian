@@ -15,5 +15,14 @@ if (code.includes("BEGIN PRIVATE KEY") || code.includes("sk-live")) {
   console.error("bundle contains a secret-like string");
   process.exit(1);
 }
+const maxBytes = 4.5 * 1024 * 1024;
+if (code.length > maxBytes) {
+  console.error(`bundle is ${code.length} bytes, over the ${maxBytes} byte cap`);
+  process.exit(1);
+}
+if (code.includes("\0asm") || code.includes('.node"') || code.includes(".node'")) {
+  console.error("bundle contains a wasm or native .node binary");
+  process.exit(1);
+}
 const megabytes = code.length / (1024 * 1024);
 console.log(`bundle ok (${megabytes.toFixed(2)}MB)`);
