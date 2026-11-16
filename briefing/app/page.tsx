@@ -56,7 +56,7 @@ export default async function BriefingPage({ searchParams }: { searchParams: Pro
         {error ? <p className="mb-4 rounded-lab-m border border-lab-border p-3">{error}</p> : null}
         <div className="mb-4 grid grid-cols-2 gap-3 min-[900px]:grid-cols-4">
           <Stat label="새 자료" value={`${week.length}건`} />
-          <Stat label="AI 요약 있음" value={`${week.filter((note) => note.summary || note.locked).length}건`} />
+          <Stat label="AI 요약 있음" value={`${week.filter((note) => note.summary.trim().length > 0).length}건`} />
           <Stat label="기관 수" value={`${sources.length}곳`} />
           <Stat label="지난주 대비" value={`${delta > 0 ? "+" : ""}${delta}건`} />
         </div>

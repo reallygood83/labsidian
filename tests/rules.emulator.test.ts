@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 let env: RulesTestEnvironment;
@@ -79,5 +79,58 @@ describe("personal library rules", () => {
       where("briefing_public", "==", true),
     ));
     expect(visible.docs.map((item) => item.id)).toEqual(["public"]);
+  });
+});
+
+const teamId = "teamalpha";
+const codeHash = "a".repeat(64);
+const codeSalt = "b".repeat(16);
+
+async function teamLibrary() {
+  const owner = env.authenticatedContext(ownerId, { email: "owner@example.com" });
+  await assertSucceeds(setDoc(doc(owner.firestore(), "config/library"), { adminUid: ownerId, teamId, mode: "team" }));
+  await assertSucceeds(setDoc(doc(owner.firestore(), `teams/${teamId}`), { ownerUid: ownerId, codeHash, codeSalt }));
+  await assertSucceeds(setDoc(doc(owner.firestore(), `teams/${teamId}/members/${ownerId}`), { codeHash, displayName: "김연구" }));
+  await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/team-note"), note({ team_id: teamId, briefing_public: true, title: "팀 글" })));
+  return owner;
+}
+
+describe("team library rules", () => {
+  it("lets a member write and blocks someone who has not joined", async () => {
+    const owner = await teamLibrary();
+    const outsider = env.authenticatedContext(otherId, { email: "other@example.com" });
+    await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/mine"), note({ team_id: teamId, title: "내 팀 글" })));
+    await assertFails(setDoc(doc(outsider.firestore(), "research_notes/stolen"), note({
+      team_id: teamId,
+      owner_uid: otherId,
+      owner_email: "other@example.com",
+      display_name: "외부",
+    })));
+    await assertFails(setDoc(doc(outsider.firestore(), `teams/${teamId}/members/${otherId}`), { codeHash: "c".repeat(64), displayName: "외부" }));
+  });
+
+  it("lets the briefing read this team only", async () => {
+    await teamLibrary();
+    const guest = env.unauthenticatedContext();
+    await assertSucceeds(getDoc(doc(guest.firestore(), "research_notes/team-note")));
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "research_notes/other-team"), note({
+        team_id: "othrteam",
+        owner_uid: "someone1",
+        owner_email: "a@b.co",
+        display_name: "다른팀",
+      }));
+    });
+    await assertFails(getDoc(doc(guest.firestore(), "research_notes/other-team")));
+    const visible = await getDocs(query(collection(guest.firestore(), "research_notes"), where("team_id", "==", teamId)));
+    expect(visible.docs.map((item) => item.id).sort()).toEqual(["team-note"]);
+  });
+
+  it("blocks a teammate from changing someone else's note", async () => {
+    await teamLibrary();
+    const mate = env.authenticatedContext("mateuser1", { email: "mate@example.com" });
+    await assertSucceeds(setDoc(doc(mate.firestore(), `teams/${teamId}/members/mateuser1`), { codeHash, displayName: "동료" }));
+    await assertFails(updateDoc(doc(mate.firestore(), "research_notes/team-note"), { title: "바꾼 제목" }));
+    await assertFails(deleteDoc(doc(mate.firestore(), "research_notes/team-note")));
   });
 });
