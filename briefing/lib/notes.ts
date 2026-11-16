@@ -31,6 +31,11 @@ function num(fields: Record<string, FsValue>, key: string): number {
   return value && "integerValue" in value && value.integerValue ? Number(value.integerValue) : 0;
 }
 
+function bool(fields: Record<string, FsValue>, key: string): boolean {
+  const value = fields[key];
+  return Boolean(value && "booleanValue" in value && value.booleanValue);
+}
+
 export function noteFromDoc(doc: FsDoc): ResearchNote | null {
   const fields = doc.fields ?? {};
   const sourceId = str(fields, "source_id");
@@ -55,7 +60,7 @@ export function noteFromDoc(doc: FsDoc): ResearchNote | null {
     converter: str(fields, "converter"),
     convert_warnings: num(fields, "convert_warnings"),
     summary_model: str(fields, "summary_model"),
-    team_shared: true,
+    team_shared: bool(fields, "team_shared"),
     briefing_public: bool(fields, "briefing_public"),
     display_name: str(fields, "display_name"),
     tags: list(fields, "tags"),
@@ -73,11 +78,6 @@ export function noteFromDoc(doc: FsDoc): ResearchNote | null {
     lock_ciphertext: str(fields, "lock_ciphertext"),
     locked_chunks: [],
   };
-}
-
-function bool(fields: Record<string, FsValue>, key: string): boolean {
-  const value = fields[key];
-  return Boolean(value && "booleanValue" in value && value.booleanValue);
 }
 
 export async function loadPublicNotes(projectId: string, apiKey: string, scope: { mode: "personal" | "team"; teamId: string; ownerUid: string }): Promise<ResearchNote[]> {

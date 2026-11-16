@@ -88,7 +88,7 @@ export function fromFirestoreDocument(doc: unknown): ResearchNote | null {
     converter: str("converter"),
     convert_warnings: warnings && "integerValue" in warnings ? Number(warnings.integerValue) : 0,
     summary_model: str("summary_model"),
-    team_shared: true,
+    team_shared: Boolean(fields.team_shared && "booleanValue" in fields.team_shared && fields.team_shared.booleanValue),
     briefing_public: Boolean(fields.briefing_public && "booleanValue" in fields.briefing_public && fields.briefing_public.booleanValue),
     tags: list("tags"),
     summary: str("summary"),
