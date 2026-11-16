@@ -1,4 +1,4 @@
-import { parse, VERSION } from "kordoc";
+import { parsePdf, VERSION } from "kordoc";
 import { LabsidianError } from "../errors";
 import { cleanConvertedMarkdown } from "./cleanup";
 
@@ -15,7 +15,7 @@ export async function pdfToMarkdown(
   onPage?: (page: number, pages: number) => void,
 ): Promise<ConvertResult> {
   const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-  const result = await parse(buffer, {
+  const result = await parsePdf(buffer, {
     ocr: false,
     images: false,
     removeHeaderFooter: true,

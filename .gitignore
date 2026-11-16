@@ -9,6 +9,7 @@ main.js.map
 data.json
 briefing/node_modules/
 briefing/.next/
+briefing/public/lock-fixture.json
 briefing/out/
 briefing/.env
 briefing/.env.local

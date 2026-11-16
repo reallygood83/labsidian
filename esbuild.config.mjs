@@ -48,11 +48,15 @@ export class LabsidianStandardFontDataFactory {
 `;
 }
 
+const SKIP_CMAP = /^(UniJIS|UniGB|UniCNS|Adobe-GB1|Adobe-Japan1|Adobe-CNS1)/;
+const SKIP_FONT = /^(Liberation|LICENSE)/;
+
 async function loadDir(dir, suffix = "") {
   const entries = await readdir(dir);
   const out = {};
   for (const name of entries) {
     if (name.startsWith(".")) continue;
+    if (SKIP_CMAP.test(name) || SKIP_FONT.test(name)) continue;
     const key = suffix && name.endsWith(suffix) ? name.slice(0, -suffix.length) : name;
     out[key] = (await readFile(path.join(dir, name))).toString("base64");
   }
@@ -62,6 +66,20 @@ async function loadDir(dir, suffix = "") {
 const pdfAssets = {
   name: "labsidian-pdf-assets",
   setup(build) {
+    build.onResolve({ filter: /^kordoc$/ }, async (args) => {
+      if (args.pluginData?.labsidianResolved) return undefined;
+      const result = await build.resolve(args.path, {
+        resolveDir: args.resolveDir,
+        kind: args.kind,
+        pluginData: { labsidianResolved: true },
+      });
+      if (result.errors.length > 0) return result;
+      return { path: result.path, sideEffects: false };
+    });
+    build.onResolve({ filter: /^\.\.?\// }, (args) => {
+      if (!args.resolveDir.includes(`${path.sep}kordoc${path.sep}dist${path.sep}`)) return undefined;
+      return { path: path.resolve(args.resolveDir, args.path), sideEffects: false };
+    });
     build.onResolve({ filter: /^labsidian-pdf-assets$/ }, () => ({ path: "labsidian-pdf-assets", namespace: "labsidian-pdf" }));
     build.onLoad({ filter: /.*/, namespace: "labsidian-pdf" }, async () => ({ contents: await assetModule(), loader: "js", resolveDir: process.cwd() }));
     build.onLoad({ filter: /kordoc[\\/]dist[\\/].*\.js$/ }, async (args) => {

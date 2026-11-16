@@ -15,4 +15,5 @@ if (code.includes("BEGIN PRIVATE KEY") || code.includes("sk-live")) {
   console.error("bundle contains a secret-like string");
   process.exit(1);
 }
-console.log(`bundle ok (${Math.round(code.length / 1024)}KB)`);
+const megabytes = code.length / (1024 * 1024);
+console.log(`bundle ok (${megabytes.toFixed(2)}MB)`);
