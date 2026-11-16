@@ -24,7 +24,7 @@ export async function sendEmailVerification(http: HttpClient, apiKey: string, id
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requestType: "VERIFY_EMAIL", idToken }),
   });
-  if (response.status >= 400) throw new LabsidianError("인증 메일을 보내지 못했어요. 잠시 뒤 다시 가입해 주세요.");
+  if (response.status >= 400) throw new LabsidianError("인증 메일을 보내지 못했어요. 잠시 뒤 다시 보내기를 눌러 주세요.");
 }
 
 export async function signInWithGoogleIdToken(http: HttpClient, apiKey: string, idToken: string): Promise<AuthSession> {
@@ -93,15 +93,35 @@ function read(text: string, status: number): {
   return payload;
 }
 
-export function userIdFromToken(idToken: string): string {
+export const VERIFY_EMAIL_MESSAGE = "메일을 확인해 주세요. 받은 편지함의 링크를 누른 뒤 다시 로그인해 주세요.";
+
+export function emailVerifiedFromToken(idToken: string): boolean {
   try {
     const part = idToken.split(".")[1] ?? "";
-    const padded = part.replace(/-/g, "+").replace(/_/g, "/");
-    const json = JSON.parse(atob(padded)) as { user_id?: string; sub?: string };
+    const json = JSON.parse(decodeJwtPart(part)) as { email_verified?: boolean };
+    return json.email_verified === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function refreshVerifiedSession(http: HttpClient, apiKey: string, session: AuthSession): Promise<AuthSession> {
+  if (!session.refreshToken) return session;
+  return refreshSession(http, apiKey, session.refreshToken);
+}
+
+export function userIdFromToken(idToken: string): string {
+  try {
+    const json = JSON.parse(decodeJwtPart(idToken.split(".")[1] ?? "")) as { user_id?: string; sub?: string };
     return json.user_id || json.sub || "";
   } catch {
     return "";
   }
+}
+
+function decodeJwtPart(part: string): string {
+  const padded = part.replace(/-/g, "+").replace(/_/g, "/");
+  return atob(padded);
 }
 
 export function parseFirebaseWebConfig(text: string): { projectId: string; apiKey: string } {

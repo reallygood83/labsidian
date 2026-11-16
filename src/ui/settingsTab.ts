@@ -7,7 +7,7 @@ import { SOURCES } from "../sources/registry";
 import type { SourceId } from "../sources/types";
 import { askConfirm } from "./confirmModal";
 import { setupSteps } from "../../packages/shared/team";
-import { parseFirebaseWebConfig, signInWithGoogleIdToken, signUpWithPassword } from "../team/auth";
+import { parseFirebaseWebConfig } from "../team/auth";
 import { createSecretField, createSettingGroup } from "../types/obsidian";
 
 const FIELD_LABELS: { key: keyof FieldToggles; label: string }[] = [
@@ -312,28 +312,24 @@ export class LabsidianSettingTab extends PluginSettingTab {
       void this.plugin.login(password).then((message) => new Notice(message));
     });
     const signup = group.createEl("button", { cls: "lab-btn", text: t("settings.signup") });
-    signup.addEventListener("click", async () => {
-      try {
-        const session = await signUpWithPassword(this.plugin.http, this.plugin.settings.firebaseApiKey, this.plugin.settings.firebaseEmail, password);
-        await this.plugin.secrets.set(SECRET.firebaseRefresh, session.refreshToken);
-        new Notice(t("settings.loggedIn", { email: session.email }));
-      } catch (error) {
+    signup.addEventListener("click", () => {
+      void this.plugin.signUpEmail(password).then((message) => new Notice(message)).catch((error: unknown) => {
         new Notice(error instanceof Error ? `${error.message} ${t("upload.vaultSafe")}` : t("upload.vaultSafe"));
-      }
+      });
+    });
+    const resend = group.createEl("button", { cls: "lab-btn", text: "인증 메일 다시 보내기" });
+    resend.addEventListener("click", () => {
+      void this.plugin.resendVerificationEmail().then((message) => new Notice(message)).catch((error: unknown) => {
+        new Notice(error instanceof Error ? error.message : "인증 메일을 다시 보내지 못했어요.");
+      });
     });
     let google = "";
     new Setting(group).setName(t("settings.google")).addText((text) => text.onChange((value) => {
       google = value.trim();
     }));
     const googleButton = group.createEl("button", { cls: "lab-btn", text: t("settings.login") });
-    googleButton.addEventListener("click", async () => {
-      try {
-        const session = await signInWithGoogleIdToken(this.plugin.http, this.plugin.settings.firebaseApiKey, google);
-        await this.plugin.secrets.set(SECRET.firebaseRefresh, session.refreshToken);
-        new Notice(t("settings.loggedIn", { email: session.email }));
-      } catch (error) {
-        new Notice(error instanceof Error ? `${error.message} ${t("upload.vaultSafe")}` : t("upload.vaultSafe"));
-      }
+    googleButton.addEventListener("click", () => {
+      void this.plugin.loginWithGoogle(google).then((message) => new Notice(message));
     });
     const logged = this.plugin.secrets.has(SECRET.firebaseRefresh);
     group.createEl("p", {

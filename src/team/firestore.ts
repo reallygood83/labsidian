@@ -94,7 +94,7 @@ export function fromFirestoreDocument(doc: unknown): ResearchNote | null {
     summary: str("summary"),
     body: str("body"),
     excerpt: str("excerpt"),
-    owner_email: str("owner_email"),
+    owner_email: "",
     display_name: str("display_name"),
     owner_uid: str("owner_uid"),
     uploaded_at: fields.uploaded_at && "timestampValue" in fields.uploaded_at ? fields.uploaded_at.timestampValue : "",
@@ -268,12 +268,76 @@ export async function listResearchNotes(http: HttpClient, projectId: string, idT
 
 export async function patchNoteTeamId(http: HttpClient, projectId: string, idToken: string, docId: string, teamId: string): Promise<void> {
   const response = await http.request({
-    url: `${collection(projectId)}/${encodeURIComponent(docId)}?updateMask.fieldPaths=team_id`,
+    url: `${collection(projectId)}/${encodeURIComponent(docId)}?updateMask.fieldPaths=team_id&updateMask.fieldPaths=owner_email`,
     method: "PATCH",
     headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({ fields: { team_id: { stringValue: teamId } } }),
   });
   if (response.status >= 400) throw new LabsidianError(`글을 옮기지 못했어요 (${response.status}). 본문은 그대로예요.`);
+}
+
+export async function listVisibleNotes(
+  http: HttpClient,
+  projectId: string,
+  idToken: string,
+  scope: { teamId: string; ownerUid: string; personal: boolean },
+): Promise<ResearchNote[]> {
+  const filters = scope.personal
+    ? [andFilter([eq("owner_uid", scope.ownerUid), eq("briefing_public", true)]), eq("owner_uid", scope.ownerUid)]
+    : [andFilter([eq("team_id", scope.teamId), eq("briefing_public", true)]), andFilter([eq("team_id", scope.teamId), eq("owner_uid", scope.ownerUid)])];
+  const byId = new Map<string, ResearchNote>();
+  for (const where of filters) {
+    const notes = await queryNotes(http, projectId, idToken, where);
+    for (const note of notes) {
+      if (note.doc_id) byId.set(note.doc_id, note);
+    }
+  }
+  return [...byId.values()];
+}
+
+function eq(path: string, value: string | boolean): Record<string, unknown> {
+  return {
+    fieldFilter: {
+      field: { fieldPath: path },
+      op: "EQUAL",
+      value: typeof value === "boolean" ? { booleanValue: value } : { stringValue: value },
+    },
+  };
+}
+
+function andFilter(filters: Record<string, unknown>[]): Record<string, unknown> {
+  return { compositeFilter: { op: "AND", filters } };
+}
+
+async function queryNotes(http: HttpClient, projectId: string, idToken: string, where: Record<string, unknown>): Promise<ResearchNote[]> {
+  const notes: ResearchNote[] = [];
+  let cursor = "";
+  for (let page = 0; page < 20; page += 1) {
+    const structuredQuery: Record<string, unknown> = {
+      from: [{ collectionId: "research_notes" }],
+      where,
+      orderBy: [{ field: { fieldPath: "__name__" }, direction: "ASCENDING" }],
+      limit: 100,
+    };
+    if (cursor) structuredQuery.startAfter = { values: [{ referenceValue: cursor }] };
+    const response = await http.request({
+      url: `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery`,
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery }),
+    });
+    if (response.status >= 400) throw new LabsidianError(`팀 서고를 읽지 못했어요 (${response.status}). 목록을 비우지 않았어요.`);
+    const payload = JSON.parse(response.text) as { document?: { name?: string } }[];
+    const rows = payload.filter((row) => row.document?.name);
+    for (const row of rows) {
+      const note = fromFirestoreDocument(row.document);
+      if (note) notes.push(note);
+    }
+    if (rows.length < 100) break;
+    cursor = rows[rows.length - 1]?.document?.name ?? "";
+    if (!cursor) break;
+  }
+  return notes;
 }
 
 export async function getResearchNote(http: HttpClient, projectId: string, idToken: string, docId: string, apiKey = ""): Promise<ResearchNote | null> {

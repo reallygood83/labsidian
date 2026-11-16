@@ -62,7 +62,7 @@ export function noteFromDoc(doc: FsDoc): ResearchNote | null {
     summary: str(fields, "summary"),
     body: str(fields, "body"),
     excerpt: str(fields, "excerpt"),
-    owner_email: str(fields, "owner_email"),
+    owner_email: "",
     owner_uid: str(fields, "owner_uid"),
     uploaded_at: str(fields, "uploaded_at"),
     locked: bool(fields, "locked"),

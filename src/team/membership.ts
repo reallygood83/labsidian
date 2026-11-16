@@ -111,12 +111,23 @@ export async function joinTeam(http: HttpClient, projectId: string, idToken: str
     }),
   });
   if (response.status === 409) return;
+  if (response.status === 403) throw new LabsidianError("메일 인증이 필요해요. 받은 편지함의 링크를 누른 뒤 다시 로그인해 주세요.");
   if (response.status >= 400) throw new LabsidianError("팀코드가 맞지 않아요. 관리자에게 새 초대 링크를 받아 주세요.");
 }
 
 export interface TeamMember {
   uid: string;
   displayName: string;
+}
+
+export async function memberExists(http: HttpClient, projectId: string, idToken: string, teamId: string, uid: string): Promise<boolean> {
+  const response = await http.request({
+    url: `${root(projectId)}/teams/${encodeURIComponent(teamId)}/members/${encodeURIComponent(uid)}`,
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  if (response.status === 200) return true;
+  if (response.status === 404) return false;
+  throw new LabsidianError(explainFirestoreStatus(response.status));
 }
 
 export async function listMembers(http: HttpClient, projectId: string, idToken: string, teamId: string): Promise<TeamMember[]> {

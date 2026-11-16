@@ -41,6 +41,7 @@ export interface LabsidianSettings {
   firebaseEmail: string;
   displayName: string;
   teamId: string;
+  moveTeamId: string;
   teamName: string;
   codeSalt: string;
   briefingUrl: string;
@@ -93,6 +94,7 @@ export const DEFAULT_SETTINGS: LabsidianSettings = {
   firebaseEmail: "",
   displayName: "",
   teamId: "",
+  moveTeamId: "",
   teamName: "",
   codeSalt: "",
   briefingUrl: "",
@@ -133,6 +135,7 @@ export function mergeSettings(raw: unknown): LabsidianSettings {
     firebaseEmail: str(record.firebaseEmail, "").trim(),
     displayName: str(record.displayName, "").trim(),
     teamId: str(record.teamId, "").trim(),
+    moveTeamId: str(record.moveTeamId, "").trim(),
     teamName: str(record.teamName, "").trim(),
     codeSalt: str(record.codeSalt, "").trim(),
     briefingUrl: str(record.briefingUrl, "").trim(),

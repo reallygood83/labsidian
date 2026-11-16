@@ -1,4 +1,4 @@
-import { placeBody } from "../types/body";
+import { LOCKED_CHUNK_BYTES, placeBody } from "../types/body";
 import type { ResearchNote } from "../types/research-note";
 
 /** PBKDF2-SHA256 iterations. OWASP 2023 lower bound for SHA-256 is 600k; we stay at the requested floor. */
@@ -82,7 +82,7 @@ export async function sealNote(input: {
   tags: string[];
 }): Promise<SealedNote> {
   if (!input.password) throw new LockError("비밀번호를 입력해 주세요.");
-  const placed = placeBody(input.body);
+  const placed = placeBody(input.body, LOCKED_CHUNK_BYTES);
   const blob: SecretBlob = {
     summary: input.summary,
     keywords: input.keywords,
@@ -143,7 +143,12 @@ export async function openSealed(sealed: SealedNote, password: string): Promise<
   if (sealed.chunks.length) {
     const parts: string[] = [];
     for (const chunk of [...sealed.chunks].sort((a, b) => a.index - b.index)) {
-      const chunkIv = fromBase64(chunk.iv);
+      let chunkIv: Uint8Array;
+      try {
+        chunkIv = fromBase64(chunk.iv);
+      } catch {
+        throw new LockError("잠금 설정을 열 수 없어요.");
+      }
       if (chunkIv.length !== IV_BYTES) throw new LockError("잠금 설정을 열 수 없어요.");
       parts.push(await decryptText(key, chunk.iv, chunk.ciphertext, aad(sealed.docId, String(chunk.index), total)));
     }

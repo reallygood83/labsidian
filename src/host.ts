@@ -13,11 +13,14 @@ export interface LabsidianHost {
   rulesForMe(): Promise<string>;
   testSource(id: SourceId): Promise<string>;
   login(password: string): Promise<string>;
+  signUpEmail(password: string): Promise<string>;
+  loginWithGoogle(idToken: string): Promise<string>;
+  resendVerificationEmail(): Promise<string>;
   createInvite(code: string): Promise<{ obsidian: string; web: string; code: string }>;
   deployConfig(): string;
   listTeamMembers(): Promise<TeamMember[]>;
   connectPersonalLibrary(): Promise<string>;
   movePersonalNotesToTeam(): Promise<string>;
   removeTeamMember(uid: string): Promise<string>;
-  joinTeam(email: string, password: string, displayName: string, mode: "signup" | "login"): Promise<string>;
+  joinTeam(email: string, password: string, displayName: string, mode: "signup" | "login"): Promise<{ status: "verify" | "joined"; message: string }>;
 }

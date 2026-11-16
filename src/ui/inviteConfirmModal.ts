@@ -6,6 +6,7 @@ export class InviteConfirmModal extends Modal {
     app: App,
     private readonly config: PublicFirebaseConfig,
     private readonly currentProjectId: string,
+    private readonly currentTeamId: string,
     private readonly onConfirm: () => Promise<void>,
   ) {
     super(app);
@@ -24,6 +25,10 @@ export class InviteConfirmModal extends Modal {
     shell.createEl("p", { text: `새로 연결 ${next}` });
     if (current && current !== next) {
       shell.createEl("p", { cls: "lab-note", text: `지금 연결된 프로젝트(${current})와 다른 프로젝트(${next})예요. 연결하면 이 볼트의 클라우드 설정이 바뀌어요.` });
+    }
+    const currentTeam = this.currentTeamId.trim();
+    if (current && current === next && currentTeam && currentTeam !== this.config.teamId) {
+      shell.createEl("p", { cls: "lab-note", text: `같은 프로젝트(${next})인데 팀이 바뀌어요. 지금 팀 ${currentTeam}, 새 팀 ${this.config.teamId}.` });
     }
     const error = shell.createDiv({ cls: "lab-note" });
     const footer = shell.createDiv({ cls: "lab-footer" });

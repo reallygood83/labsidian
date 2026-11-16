@@ -162,6 +162,82 @@ describe("personal library rules", () => {
     expect(opened.body).toBe("잠긴본문-표식");
     expect(opened.publisher).toBe("영화진흥위원회");
   });
+
+  it("stores a locked body over 700KB without exceeding the chunk limit", async () => {
+    const owner = user(ownerId, "owner@example.com");
+    await assertSucceeds(setDoc(doc(owner.firestore(), "config/library"), { adminUid: ownerId, teamId: ownerId, mode: "personal" }));
+    const source: ResearchNote = {
+      title: "긴 글",
+      series: "",
+      source: "kofic",
+      source_id: "kofic-long",
+      doc_id: "locked-long",
+      team_id: ownerId,
+      type: "",
+      publisher: "영화진흥위원회",
+      author: ["김연구"],
+      published: "2026-11-05",
+      url: "https://example.test/long",
+      pdf_url: "",
+      query: "영화",
+      keywords: ["키워드"],
+      collected: "2026-11-16",
+      converter: "",
+      convert_warnings: 0,
+      summary_model: "",
+      team_shared: false,
+      briefing_public: false,
+      tags: ["정책"],
+      summary: "요약",
+      body: "가".repeat(700_000),
+      excerpt: "",
+      owner_email: "",
+      display_name: "김연구",
+      owner_uid: ownerId,
+      uploaded_at: "",
+      locked: false,
+      title_hidden: false,
+      lock_salt: "",
+      lock_iterations: 0,
+      lock_iv: "",
+      lock_ciphertext: "",
+      locked_chunks: [],
+    };
+    const locked = await lockResearchNote(source, "long-password", true);
+    expect(locked.locked_chunks.length).toBeGreaterThan(0);
+    for (const chunk of locked.locked_chunks) expect(chunk.ciphertext.length).toBeLessThanOrEqual(900_000);
+    await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/locked-long"), {
+      title: locked.title,
+      publisher: "",
+      team_id: ownerId,
+      owner_uid: ownerId,
+      display_name: "김연구",
+      briefing_public: false,
+      body: "",
+      summary: "",
+      locked: true,
+      title_hidden: true,
+      lock_salt: locked.lock_salt,
+      lock_iterations: locked.lock_iterations,
+      lock_iv: locked.lock_iv,
+      lock_ciphertext: locked.lock_ciphertext,
+      chunk_count: locked.locked_chunks.length,
+    }));
+    for (const chunk of locked.locked_chunks) {
+      await assertSucceeds(setDoc(doc(owner.firestore(), `research_notes/locked-long/chunks/${String(chunk.index).padStart(4, "0")}`), {
+        index: chunk.index,
+        text: "",
+        iv: chunk.iv,
+        ciphertext: chunk.ciphertext,
+      }));
+    }
+    await assertFails(setDoc(doc(owner.firestore(), "research_notes/locked-long/chunks/9999"), {
+      index: 9999,
+      text: "",
+      iv: "too-long",
+      ciphertext: "x".repeat(900_001),
+    }));
+  });
 });
 
 const teamId = "teamalpha";
@@ -216,6 +292,30 @@ describe("team library rules", () => {
     await assertSucceeds(setDoc(doc(mate.firestore(), `teams/${teamId}/members/mateuser1`), { codeHash, displayName: "동료" }));
     await assertFails(updateDoc(doc(mate.firestore(), "research_notes/team-note"), { title: "바꾼 제목" }));
     await assertFails(deleteDoc(doc(mate.firestore(), "research_notes/team-note")));
+  });
+
+  it("lets a verified member join and blocks an unverified signup", async () => {
+    const owner = await teamLibrary();
+    const verified = user("newuser01", "new@example.com");
+    await assertSucceeds(setDoc(doc(verified.firestore(), `teams/${teamId}/members/newuser01`), { codeHash, displayName: "새팀원" }));
+    const unverified = user("newuser02", "new2@example.com", false);
+    await assertFails(setDoc(doc(unverified.firestore(), `teams/${teamId}/members/newuser02`), { codeHash, displayName: "미인증" }));
+    const listed = await getDocs(query(
+      collection(owner.firestore(), "research_notes"),
+      where("team_id", "==", teamId),
+      where("owner_uid", "==", ownerId),
+    ));
+    expect(listed.docs.map((item) => item.id)).toContain("team-note");
+  });
+
+  it("lets a personal admin join the moved team once", async () => {
+    const owner = user(ownerId, "owner@example.com");
+    await assertSucceeds(setDoc(doc(owner.firestore(), "config/library"), { adminUid: ownerId, teamId: ownerId, mode: "personal" }));
+    await assertSucceeds(setDoc(doc(owner.firestore(), "teams/movedteam"), { ownerUid: ownerId, codeHash, codeSalt }));
+    await assertSucceeds(setDoc(doc(owner.firestore(), `teams/movedteam/members/${ownerId}`), { codeHash, displayName: "김연구" }));
+    const member = await getDoc(doc(owner.firestore(), `teams/movedteam/members/${ownerId}`));
+    expect(member.exists()).toBe(true);
+    await assertFails(setDoc(doc(owner.firestore(), `teams/movedteam/members/${ownerId}`), { codeHash, displayName: "김연구" }));
   });
 
   it("rejects a different account from creating the library", async () => {

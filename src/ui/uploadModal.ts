@@ -10,12 +10,14 @@ export interface UploadItem {
 export interface UploadPlan {
   hideTitle: boolean;
   passwords: Record<string, string>;
+  briefingPublic: boolean;
 }
 
 export class UploadModal extends Modal {
   constructor(
     app: App,
     private readonly items: UploadItem[],
+    private readonly defaultPublic: boolean,
     private readonly onConfirm: (plan: UploadPlan) => void,
   ) {
     super(app);
@@ -33,6 +35,12 @@ export class UploadModal extends Modal {
       row.createSpan({ text: item.title });
       row.createSpan({ cls: "lab-badge", text: item.updating ? t("upload.update") : t("upload.new") });
     }
+
+    const publicRow = shell.createEl("label", { cls: "lab-check" });
+    const publicToggle = publicRow.createEl("input", { attr: { type: "checkbox" } });
+    publicToggle.checked = this.defaultPublic;
+    publicRow.createSpan({ text: "브리핑에 공개" });
+    shell.createEl("p", { cls: "lab-note", text: "켜면 인터넷에 공개돼요. 링크를 아는 사람이 볼 수 있어요." });
 
     const lockRow = shell.createEl("label", { cls: "lab-check" });
     const lockToggle = lockRow.createEl("input", { attr: { type: "checkbox" } });
@@ -105,7 +113,7 @@ export class UploadModal extends Modal {
           for (const item of this.items) passwords[item.sourceId] = shared.password.value;
         }
       }
-      const plan = { hideTitle: hideTitle.checked, passwords };
+      const plan = { hideTitle: hideTitle.checked, passwords, briefingPublic: publicToggle.checked };
       shared.password.value = "";
       shared.confirm.value = "";
       for (const pair of pairs.values()) {

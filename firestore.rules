@@ -34,7 +34,7 @@ service cloud.firestore {
     }
 
     function isOwner(teamId) {
-      return signedIn() && teamDoc(teamId).data.ownerUid == request.auth.uid;
+      return verified() && teamDoc(teamId).data.ownerUid == request.auth.uid;
     }
 
     function isMember(teamId) {
@@ -197,7 +197,7 @@ service cloud.firestore {
         allow list: if isOwner(teamId);
         allow create: if verified()
           && request.auth.uid == userId
-          && teamId == libraryTeam()
+          && (teamId == libraryTeam() || (personal() && isAdmin() && isOwner(teamId)))
           && request.resource.data.keys().hasOnly(['codeHash', 'displayName'])
           && request.resource.data.codeHash == teamDoc(teamId).data.codeHash
           && request.resource.data.displayName is string
