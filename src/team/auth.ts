@@ -17,6 +17,16 @@ export async function signUpWithPassword(http: HttpClient, apiKey: string, email
   return identity(http, apiKey, "accounts:signUp", { email, password, returnSecureToken: true });
 }
 
+export async function sendEmailVerification(http: HttpClient, apiKey: string, idToken: string): Promise<void> {
+  const response = await http.request({
+    url: `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${encodeURIComponent(apiKey)}`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestType: "VERIFY_EMAIL", idToken }),
+  });
+  if (response.status >= 400) throw new LabsidianError("인증 메일을 보내지 못했어요. 잠시 뒤 다시 가입해 주세요.");
+}
+
 export async function signInWithGoogleIdToken(http: HttpClient, apiKey: string, idToken: string): Promise<AuthSession> {
   return identity(http, apiKey, "accounts:signInWithIdp", {
     postBody: `id_token=${encodeURIComponent(idToken)}&providerId=google.com`,

@@ -44,6 +44,7 @@ function frontmatter(note: ResearchNote, fields: FieldToggles): string {
   write("series", yamlString(note.series));
   write("source", yamlString(note.source));
   write("source_id", yamlString(note.source_id));
+  if (note.doc_id) lines.push(`doc_id: ${yamlString(note.doc_id)}`);
   write("type", yamlString(note.type));
   write("publisher", yamlString(note.publisher));
   if (enabled("author", fields) && note.author.length) {

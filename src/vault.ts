@@ -3,6 +3,7 @@ import { sanitizeFileBase } from "./text";
 
 export interface SavedNoteRef {
   sourceId: string;
+  docId: string;
   doi: string;
   url: string;
   path: string;
@@ -15,6 +16,7 @@ export function savedNoteRefs(app: App): SavedNoteRef[] {
     const front = app.metadataCache.getFileCache(file)?.frontmatter;
     refs.push({
       sourceId: typeof front?.source_id === "string" ? front.source_id : "",
+      docId: typeof front?.doc_id === "string" ? front.doc_id : "",
       doi: typeof front?.doi === "string" ? front.doi : "",
       url: typeof front?.url === "string" ? front.url : "",
       path: file.path,

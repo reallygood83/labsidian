@@ -74,7 +74,7 @@ export default async function BriefingPage({ searchParams }: { searchParams: Pro
               <h2 className="mb-3 text-lg font-semibold">{LABELS[source] ?? source}</h2>
               <div className="grid grid-cols-1 gap-3 min-[900px]:grid-cols-2">
                 {group.map((note) => (
-                  <ResearchCard key={note.source_id} note={note} />
+                  <ResearchCard key={note.doc_id || note.source_id} note={note} />
                 ))}
               </div>
             </section>

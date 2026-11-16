@@ -61,7 +61,7 @@ export class ProgressModal extends Modal {
     const total = this.session.jobs.length;
     const done = this.session.doneCount;
     const bar = shell.createDiv({ cls: "lab-bar" });
-    bar.createSpan({ attr: { style: `width:${total ? Math.round((done / total) * 100) : 0}%` } });
+    bar.createSpan({ cls: progressClass(total ? done / total : 0) });
     shell.createDiv({ cls: "lab-note", text: `${done}/${total} 저장 중` });
     for (const job of this.session.jobs) this.paintJob(shell, job);
     if (this.session.finished) {
@@ -83,8 +83,7 @@ export class ProgressModal extends Modal {
     }
     if (job.stage === "convert" && job.pages) {
       const pageBar = main.createDiv({ cls: "lab-bar" });
-      const width = Math.round(((job.page ?? 0) / job.pages) * 100);
-      pageBar.createSpan({ attr: { style: `width:${width}%` } });
+      pageBar.createSpan({ cls: progressClass(job.pages ? (job.page ?? 0) / job.pages : 0) });
       main.createDiv({ cls: "lab-note", text: t("progress.pages", { page: job.page ?? 0, pages: job.pages }) });
     }
     if (job.error) main.createDiv({ cls: "lab-note", text: job.error });
@@ -106,6 +105,11 @@ export class ProgressModal extends Modal {
       action.addEventListener("click", () => this.session.cancel(job.id));
     }
   }
+}
+
+function progressClass(ratio: number): string {
+  const step = Math.round(Math.min(1, Math.max(0, ratio)) * 10) * 10;
+  return `is-p${step}`;
 }
 
 function stageRank(stage: Stage): number {

@@ -92,7 +92,15 @@ export async function loadPublicNotes(projectId: string, apiKey: string, scope: 
           ],
         },
       }
-    : { fieldFilter: { field: { fieldPath: "team_id" }, op: "EQUAL", value: { stringValue: scope.teamId } } };
+    : {
+        compositeFilter: {
+          op: "AND",
+          filters: [
+            { fieldFilter: { field: { fieldPath: "team_id" }, op: "EQUAL", value: { stringValue: scope.teamId } } },
+            { fieldFilter: { field: { fieldPath: "briefing_public" }, op: "EQUAL", value: { booleanValue: true } } },
+          ],
+        },
+      };
   const response = await fetch(url, {
     method: "POST",
     cache: "no-store",

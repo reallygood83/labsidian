@@ -21,8 +21,8 @@ describe("search usability", () => {
   });
 
   it("summarizes a batch that skipped failures", () => {
-    expect(batchSummary(3, 0)).toBe("3개를 저장했어요.");
-    expect(batchSummary(2, 1)).toBe("2개를 저장했어요. 1개는 실패해서 건너뛰었어요.");
+    expect(batchSummary(3, 0, 0)).toBe("3개를 저장했어요.");
+    expect(batchSummary(2, 1, 1)).toBe("2개를 저장했어요. 1개는 이미 있어서 건너뛰었어요. 1개는 실패해서 건너뛰었어요.");
   });
 
   it("walks the first-run tour from search to open", () => {

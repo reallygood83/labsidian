@@ -31,7 +31,6 @@ export function toFirestoreFields(note: ResearchNote, chunkCount = 0): { fields:
     ["summary", note.locked ? "" : note.summary],
     ["body", note.locked || chunkCount > 0 ? "" : note.body],
     ["excerpt", note.excerpt],
-    ["owner_email", note.owner_email],
     ["display_name", note.display_name],
     ["owner_uid", note.owner_uid],
   ];
@@ -237,21 +236,44 @@ export async function listResearchNotes(http: HttpClient, projectId: string, idT
   const where = ownerUid
     ? { fieldFilter: { field: { fieldPath: "owner_uid" }, op: "EQUAL", value: { stringValue: ownerUid } } }
     : { fieldFilter: { field: { fieldPath: "team_id" }, op: "EQUAL", value: { stringValue: teamId } } };
+  const notes: ResearchNote[] = [];
+  let cursor = "";
+  for (let page = 0; page < 20; page += 1) {
+    const structuredQuery: Record<string, unknown> = {
+      from: [{ collectionId: "research_notes" }],
+      where,
+      orderBy: [{ field: { fieldPath: "__name__" }, direction: "ASCENDING" }],
+      limit: 100,
+    };
+    if (cursor) structuredQuery.startAfter = { values: [{ referenceValue: cursor }] };
+    const response = await http.request({
+      url: `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery`,
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery }),
+    });
+    if (response.status >= 400) throw new LabsidianError(`팀 서고를 읽지 못했어요 (${response.status}). 내 볼트의 노트는 그대로예요.`);
+    const payload = JSON.parse(response.text) as { document?: { name?: string } }[];
+    const rows = payload.filter((row) => row.document?.name);
+    for (const row of rows) {
+      const note = fromFirestoreDocument(row.document);
+      if (note) notes.push(note);
+    }
+    if (rows.length < 100) break;
+    cursor = rows[rows.length - 1]?.document?.name ?? "";
+    if (!cursor) break;
+  }
+  return notes;
+}
+
+export async function patchNoteTeamId(http: HttpClient, projectId: string, idToken: string, docId: string, teamId: string): Promise<void> {
   const response = await http.request({
-    url: `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery`,
-    method: "POST",
+    url: `${collection(projectId)}/${encodeURIComponent(docId)}?updateMask.fieldPaths=team_id`,
+    method: "PATCH",
     headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      structuredQuery: {
-        from: [{ collectionId: "research_notes" }],
-        where,
-        limit: 100,
-      },
-    }),
+    body: JSON.stringify({ fields: { team_id: { stringValue: teamId } } }),
   });
-  if (response.status >= 400) throw new LabsidianError(`팀 서고를 읽지 못했어요 (${response.status}). 내 볼트의 노트는 그대로예요.`);
-  const payload = JSON.parse(response.text) as { document?: unknown }[];
-  return payload.map((row) => fromFirestoreDocument(row.document)).filter((note): note is ResearchNote => note !== null);
+  if (response.status >= 400) throw new LabsidianError(`글을 옮기지 못했어요 (${response.status}). 본문은 그대로예요.`);
 }
 
 export async function getResearchNote(http: HttpClient, projectId: string, idToken: string, docId: string, apiKey = ""): Promise<ResearchNote | null> {

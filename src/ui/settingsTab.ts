@@ -5,7 +5,7 @@ import { SECRET } from "../secrets";
 import type { AiProvider, FieldToggles } from "../settings";
 import { SOURCES } from "../sources/registry";
 import type { SourceId } from "../sources/types";
-import { FIRESTORE_RULES } from "../../packages/shared/rulesText";
+import { askConfirm } from "./confirmModal";
 import { setupSteps } from "../../packages/shared/team";
 import { parseFirebaseWebConfig, signInWithGoogleIdToken, signUpWithPassword } from "../team/auth";
 import { createSecretField, createSettingGroup } from "../types/obsidian";
@@ -82,8 +82,19 @@ export class LabsidianSettingTab extends PluginSettingTab {
       visibility.createSpan({ text: "브리핑에 공개" });
       card.createEl("p", { cls: "lab-note", text: "기본은 나만 보기예요. 공개로 고른 글만 브리핑에 나와요." });
       toggle.addEventListener("change", () => {
-        this.plugin.settings.shareOnBriefing = toggle.checked;
-        void this.plugin.saveSettings();
+        if (!toggle.checked) {
+          this.plugin.settings.shareOnBriefing = false;
+          void this.plugin.saveSettings();
+          return;
+        }
+        void askConfirm(this.app, "브리핑에 공개", "이 글을 올리면 인터넷에 공개돼요. 링크를 아는 사람이 볼 수 있어요.").then((ok) => {
+          if (!ok) {
+            toggle.checked = false;
+            return;
+          }
+          this.plugin.settings.shareOnBriefing = true;
+          void this.plugin.saveSettings();
+        });
       });
     }
     const again = card.createEl("button", { cls: "lab-btn", text: "안내 다시 보기" });
@@ -95,12 +106,13 @@ export class LabsidianSettingTab extends PluginSettingTab {
     if (this.plugin.settings.libraryMode === "personal") {
       const move = card.createEl("button", { cls: "lab-btn", text: "팀 서고로 옮기기" });
       move.addEventListener("click", () => {
-        const ok = window.confirm("개인 서고의 글을 팀 서고로 옮길까요? 옮기면 팀원이 브리핑에서 볼 수 있어요.");
-        if (!ok) return;
-        void this.plugin.movePersonalNotesToTeam().then((message) => {
+        void askConfirm(this.app, "팀 서고로 옮기기", "공개로 둔 글은 인터넷에 공개돼요. 비공개 글은 그대로 나만 봐요.").then((ok) => {
+          if (!ok) return;
+          void this.plugin.movePersonalNotesToTeam().then((message) => {
           new Notice(message);
           this.display();
         }).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "글을 옮기지 못했어요. 로그인 상태를 확인해 주세요."));
+        });
       });
     }
   }
@@ -257,9 +269,9 @@ export class LabsidianSettingTab extends PluginSettingTab {
     });
     const copyRules = steps.createEl("button", { cls: "lab-btn", text: "규칙 복사" });
     copyRules.addEventListener("click", () => {
-      void navigator.clipboard.writeText(FIRESTORE_RULES).then(
-        () => new Notice("규칙을 복사했어요. Firestore 규칙 편집기에 붙여 넣고 게시해요."),
-        () => new Notice("복사하지 못했어요. 규칙 편집기에서 firestore.rules 내용을 붙여 넣어 주세요."),
+      void this.plugin.rulesForMe().then((rules) => navigator.clipboard.writeText(rules)).then(
+        () => new Notice("규칙을 복사했어요. 내 계정이 들어 있어요. Firestore 규칙 편집기에 붙여 넣고 게시해요."),
+        () => new Notice("규칙을 복사하지 못했어요. 로그인한 뒤 다시 눌러 주세요."),
       );
     });
 

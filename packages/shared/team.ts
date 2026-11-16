@@ -101,6 +101,13 @@ export function parseInviteParams(c: string, t: string): { config: PublicFirebas
   return { config: decodePublicConfig(c), code: decodeURIComponent(t) };
 }
 
+export function codeFromLocation(search: string, hash: string): { c: string; code: string } {
+  return {
+    c: new URLSearchParams(search).get("c") ?? "",
+    code: codeFromFragment(hash),
+  };
+}
+
 export function codeFromFragment(hash: string): string {
   const params = new URLSearchParams(hash.replace(/^#/, ""));
   return params.get("t") ?? "";

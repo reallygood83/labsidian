@@ -19,6 +19,7 @@ function sealInput(hideTitle = false) {
     hideTitle,
     docId: "doc-lock-1",
     sourceId: "kofic-lock-1",
+    publisher: "영화진흥위원회",
     url: "https://example.test/report",
     pdfUrl: "https://example.test/file.pdf",
     author: ["김연구"],
@@ -75,6 +76,7 @@ describe("note lock", () => {
     expect(opened.title).toBe(title);
     expect(opened.body).toBe(body);
     expect(opened.source_id).toBe("kofic-lock-1");
+    expect(opened.publisher).toBe("영화진흥위원회");
     expect(opened.url).toBe("https://example.test/report");
   }, 30_000);
 
@@ -114,7 +116,7 @@ describe("note lock", () => {
     expect(locked.keywords).toEqual([]);
     expect(locked.excerpt).toBe("");
     const stored = JSON.stringify({ ...locked, ...toFirestoreFields(locked, locked.locked_chunks.length) });
-    for (const secret of [title, summary, body, keyword, "kofic-lock-1", "https://example.test/report", "김연구"]) {
+    for (const secret of [title, summary, body, keyword, "kofic-lock-1", "https://example.test/report", "김연구", "영화진흥위원회"]) {
       expect(stored.includes(secret)).toBe(false);
     }
     const opened = await unlockResearchNote(locked, password);

@@ -54,10 +54,18 @@ export class UploadModal extends Modal {
     perHost.hide();
     const hideRow = lockBox.createEl("label", { cls: "lab-check" });
     const hideTitle = hideRow.createEl("input", { attr: { type: "checkbox" } });
+    hideTitle.checked = true;
     hideRow.createSpan({ text: "제목도 숨기기" });
-    lockBox.createEl("p", { cls: "lab-note", text: "기본값은 제목을 공개해요. 출처, 기관, 날짜는 브리핑에 그대로 보여요." });
+    lockBox.createEl("p", { cls: "lab-note", text: "잠그면 제목과 기관은 기본적으로 숨겨요. 체크를 끄면 제목만 공개돼요." });
 
-    lockToggle.addEventListener("change", () => (lockToggle.checked ? lockBox.show() : lockBox.hide()));
+    lockToggle.addEventListener("change", () => {
+      if (lockToggle.checked) {
+        hideTitle.checked = true;
+        lockBox.show();
+      } else {
+        lockBox.hide();
+      }
+    });
     perToggle.addEventListener("change", () => {
       if (perToggle.checked) {
         perHost.show();

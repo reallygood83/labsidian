@@ -10,6 +10,7 @@ export interface LabsidianHost {
   http: HttpClient;
   saveSettings(): Promise<void>;
   openTour(): void;
+  rulesForMe(): Promise<string>;
   testSource(id: SourceId): Promise<string>;
   login(password: string): Promise<string>;
   createInvite(code: string): Promise<{ obsidian: string; web: string; code: string }>;

@@ -1,26 +1,30 @@
-import { headers } from "next/headers";
+"use client";
+
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { buildInviteLinks, parseInviteParams } from "../../../packages/shared/team";
+import { buildInviteLinks, codeFromLocation, parseInviteParams } from "../../../packages/shared/team";
 
-export const dynamic = "force-dynamic";
+export default function JoinPage() {
+  const [ready, setReady] = useState(false);
+  const [obsidian, setObsidian] = useState("");
+  const [svg, setSvg] = useState("");
 
-export default async function JoinPage({ searchParams }: { searchParams: Promise<{ c?: string; t?: string }> }) {
-  const params = await searchParams;
-  const c = params.c ?? "";
-  const t = params.t ?? "";
-  let ready = true;
-  let obsidian = "";
-  try {
-    const parsed = parseInviteParams(c, t);
-    obsidian = buildInviteLinks(parsed.config, parsed.code).obsidian;
-  } catch {
-    ready = false;
-  }
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "";
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  const self = host ? `${proto}://${host}/join?c=${encodeURIComponent(c)}&t=${encodeURIComponent(t)}` : obsidian;
-  const svg = ready ? await QRCode.toString(self, { type: "svg", margin: 1, width: 220 }) : "";
+  useEffect(() => {
+    const { c, code } = codeFromLocation(window.location.search, window.location.hash);
+    try {
+      const parsed = parseInviteParams(c, code);
+      const link = buildInviteLinks(parsed.config, parsed.code).obsidian;
+      const self = `${window.location.origin}/join?c=${encodeURIComponent(c)}#t=${encodeURIComponent(code)}`;
+      setObsidian(link);
+      void QRCode.toString(self, { type: "svg", margin: 1, width: 220 }).then((value) => {
+        setSvg(value);
+        setReady(true);
+      });
+    } catch {
+      setReady(false);
+    }
+  }, []);
+
   return (
     <main className="mx-auto max-w-xl p-8">
       <p className="text-sm text-lab-text-muted">Labsidian</p>
@@ -32,7 +36,7 @@ export default async function JoinPage({ searchParams }: { searchParams: Promise
             <li>옵시디언 1.11.4 이상을 설치해요.</li>
             <li>플러그인 압축을 풀어 <code>.obsidian/plugins/labsidian</code>에 넣어요.</li>
             <li>설정에서 제한 모드를 끄고 Labsidian을 켜요.</li>
-            <li>아래 버튼을 누르면 가입 창이 열려요.</li>
+            <li>메일의 인증 링크를 누른 뒤 로그인해요.</li>
           </ol>
           <a className="mt-6 inline-block rounded-lab-m bg-lab-accent px-4 py-2 font-medium text-lab-on-accent" href={obsidian}>
             Obsidian에서 열기

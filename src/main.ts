@@ -10,8 +10,8 @@ import { SECRET, createSecretStore, type SecretStore } from "./secrets";
 import { mergeSettings, rememberQuery, settingsForDisk, type LabsidianSettings } from "./settings";
 import { sourceById } from "./sources/registry";
 import type { Attachment, SearchHit, SourceContext, SourceId } from "./sources/types";
-import { refreshSession, signInWithPassword, signUpWithPassword, userIdFromToken } from "./team/auth";
-import { getResearchNote, listResearchNotes, upsertResearchNote } from "./team/firestore";
+import { refreshSession, sendEmailVerification, signInWithPassword, signUpWithPassword, userIdFromToken } from "./team/auth";
+import { getResearchNote, listResearchNotes, patchNoteTeamId, upsertResearchNote } from "./team/firestore";
 import { LabsidianSettingTab } from "./ui/settingsTab";
 import { ProgressModal } from "./ui/progressModal";
 import { SearchModal } from "./ui/searchModal";
@@ -20,6 +20,7 @@ import { askPassword, askPasswordChange } from "./ui/passwordModal";
 import { createNote, notesBySourceId, savedNoteRefs } from "./vault";
 import { buildMarkdown } from "./note/build";
 import { lockResearchNote, noteDocumentId, unlockResearchNote } from "../packages/shared/lock";
+import { rulesForAdmin } from "../packages/shared/rulesText";
 import type { ResearchNote } from "../packages/types/research-note";
 import { buildInviteLinks, encodePublicConfig, generateCodeSalt, generateTeamCode, generateTeamId, parseInviteParams, type PublicFirebaseConfig } from "../packages/shared/team";
 import { JoinModal } from "./ui/joinModal";
@@ -87,7 +88,9 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       void this.acceptInvite(params.c ?? "", code);
     });
     this.addSettingTab(new LabsidianSettingTab(this.app, this));
-    if (!this.settings.tourSeen) this.openTour();
+    this.app.workspace.onLayoutReady(() => {
+      if (!this.settings.tourSeen) this.openTour();
+    });
   }
 
   openTour(): void {
@@ -140,7 +143,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
   async acceptInvite(c: string, t: string): Promise<void> {
     try {
       const parsed = parseInviteParams(c, t);
-      new InviteConfirmModal(this.app, parsed.config, async () => {
+      new InviteConfirmModal(this.app, parsed.config, this.settings.firebaseProjectId, async () => {
         this.applyPublicConfig(parsed.config);
         this.authToken = "";
         await this.secrets.remove(SECRET.firebaseRefresh);
@@ -165,7 +168,17 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
     this.settings.displayName = displayName;
     await this.saveSettings();
     await joinTeam(this.http, this.settings.firebaseProjectId, session.idToken, this.settings.teamId, session.localId, displayName, code, this.settings.codeSalt);
+    if (mode === "signup") {
+      await sendEmailVerification(this.http, this.settings.firebaseApiKey, session.idToken);
+      return "인증 메일을 보냈어요. 메일의 링크를 누른 뒤 다시 로그인해 주세요.";
+    }
     return `${this.settings.teamName || "팀"} 서고에 들어왔어요.`;
+  }
+
+  async rulesForMe(): Promise<string> {
+    const token = await this.token();
+    if (!token) throw new Error("로그인한 뒤에 규칙을 복사할 수 있어요. 규칙에 내 계정이 들어가요.");
+    return rulesForAdmin(userIdFromToken(token));
   }
 
   async createInvite(code: string): Promise<{ obsidian: string; web: string; code: string }> {
@@ -193,7 +206,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
   }
 
   deployConfig(): string {
-    return encodePublicConfig({ ...this.publicConfig(), ownerUid: "" });
+    return encodePublicConfig(this.publicConfig());
   }
 
   async connectPersonalLibrary(): Promise<string> {
@@ -221,7 +234,8 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
     await createTeam(this.http, this.settings.firebaseProjectId, token, teamId, uid, code, salt);
     await joinTeam(this.http, this.settings.firebaseProjectId, token, teamId, uid, this.shownName(), code, salt);
     for (const note of notes) {
-      await upsertResearchNote(this.http, this.settings.firebaseProjectId, token, { ...note, team_id: teamId, briefing_public: true });
+      const docId = note.doc_id || await noteDocumentId(note.team_id, note.owner_uid, note.source_id);
+      await patchNoteTeamId(this.http, this.settings.firebaseProjectId, token, docId, teamId);
     }
     await updateLibrary(this.http, this.settings.firebaseProjectId, token, teamId, "team");
     this.settings.libraryMode = "team";
@@ -271,7 +285,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
     this.settings.teamId = config.teamId;
     this.settings.teamName = config.teamName;
     this.settings.codeSalt = config.codeSalt;
-    if (config.adminName) this.settings.displayName = this.settings.displayName || config.adminName;
+    this.settings.libraryMode = config.mode === "personal" ? "personal" : "team";
     this.settings.firebaseEnabled = true;
     if (config.briefingUrl) this.settings.briefingUrl = config.briefingUrl;
   }
@@ -328,8 +342,8 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
     stop();
     this.status?.setText("");
     const ok = session.jobs.filter((job) => job.stage === "done").length;
-    const skipped = session.jobs.filter((job) => job.stage === "error").length + already;
-    new Notice(batchSummary(ok, skipped));
+    const failed = session.jobs.filter((job) => job.stage === "error").length;
+    new Notice(batchSummary(ok, failed, already));
   }
 
   private async collectOne(
@@ -466,7 +480,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
 
   private async openShared(sourceId: string): Promise<void> {
     if (!sourceId) return;
-    const local = notesBySourceId(this.app).get(sourceId);
+    const local = savedNoteRefs(this.app).find((item) => item.sourceId === sourceId || item.docId === sourceId)?.file;
     if (local) {
       await this.app.workspace.getLeaf(false).openFile(local);
       return;
@@ -568,6 +582,6 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
 }
 
 function summaryFrom(markdown: string): string {
-  const match = markdown.match(/> \[!summary\]- AI 요약\n([\s\S]*?)(?:\n\n|$)/);
+  const match = markdown.match(/> \[!summary\]- AI 요약\r?\n([\s\S]*?)(?:\r?\n\r?\n|$)/);
   return (match?.[1] ?? "").replace(/^> ?/gm, "").trim();
 }

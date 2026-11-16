@@ -39,9 +39,11 @@ export function saveButtonLabel(count: number): string {
   return `선택한 ${count}개 저장`;
 }
 
-export function batchSummary(saved: number, skipped: number): string {
-  if (skipped === 0) return `${saved}개를 저장했어요.`;
-  return `${saved}개를 저장했어요. ${skipped}개는 실패해서 건너뛰었어요.`;
+export function batchSummary(saved: number, failed: number, already = 0): string {
+  const parts = [`${saved}개를 저장했어요.`];
+  if (already > 0) parts.push(`${already}개는 이미 있어서 건너뛰었어요.`);
+  if (failed > 0) parts.push(`${failed}개는 실패해서 건너뛰었어요.`);
+  return parts.join(" ");
 }
 
 export const TOUR_STEPS = [

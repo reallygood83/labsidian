@@ -62,7 +62,7 @@ export function ResearchCard({ note }: { note: ResearchNote }) {
             원문 ↗
           </a>
         ) : null}
-        <OpenInObsidian sourceId={note.source_id} />
+        <OpenInObsidian sourceId={note.doc_id || note.source_id} />
       </div>
       {shown.display_name ? <p className="mt-2 text-xs text-lab-text-faint">{shown.display_name}</p> : null}
     </article>

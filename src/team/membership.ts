@@ -29,7 +29,20 @@ export async function createLibrary(http: HttpClient, projectId: string, idToken
       },
     }),
   });
-  if (response.status === 409) return;
+  if (response.status === 409) {
+    const existing = await http.request({
+      url: `${root(projectId)}/config/library`,
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (existing.status >= 400) {
+      throw new LabsidianError("이미 다른 사람이 이 서고를 만들었어요. 그 사람의 초대를 받아 주세요.");
+    }
+    const payload = JSON.parse(existing.text) as { fields?: { adminUid?: { stringValue?: string } } };
+    if (payload.fields?.adminUid?.stringValue !== adminUid) {
+      throw new LabsidianError("이미 다른 사람이 이 서고를 만들었어요. 그 사람의 초대를 받아 주세요.");
+    }
+    return;
+  }
   if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
 }
 

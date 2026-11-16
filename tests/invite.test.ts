@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FIRESTORE_RULES } from "../packages/shared/rulesText";
 import {
   buildInviteLinks,
+  codeFromLocation,
   decodePublicConfig,
   encodePublicConfig,
   hashTeamCode,
@@ -33,6 +34,7 @@ describe("invite links", () => {
     expect(links.obsidian.includes("t=CODE99") && links.obsidian.indexOf("#") < links.obsidian.indexOf("t=CODE99")).toBe(true);
     expect(parseInviteUrl(links.obsidian)).toEqual({ config, code: "CODE99" });
     expect(parseInviteUrl(links.web).code).toBe("CODE99");
+    expect(codeFromLocation("?c=abc&t=WRONG", "#t=RIGHT")).toEqual({ c: "abc", code: "RIGHT" });
   });
 
   it("hashes the team code and does not store the code itself", async () => {

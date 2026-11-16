@@ -38,6 +38,7 @@ export interface OpenSecrets {
   keywords: string[];
   body: string;
   source_id: string;
+  publisher: string;
   url: string;
   pdf_url: string;
   author: string[];
@@ -51,6 +52,7 @@ interface SecretBlob {
   title?: string;
   body?: string;
   source_id: string;
+  publisher: string;
   url: string;
   pdf_url: string;
   author: string[];
@@ -72,6 +74,7 @@ export async function sealNote(input: {
   hideTitle: boolean;
   docId: string;
   sourceId: string;
+  publisher: string;
   url: string;
   pdfUrl: string;
   author: string[];
@@ -84,6 +87,7 @@ export async function sealNote(input: {
     summary: input.summary,
     keywords: input.keywords,
     source_id: input.sourceId,
+    publisher: input.publisher,
     url: input.url,
     pdf_url: input.pdfUrl,
     author: input.author,
@@ -117,12 +121,24 @@ export async function openSealed(sealed: SealedNote, password: string): Promise<
   if (!Number.isInteger(sealed.iterations) || sealed.iterations < PBKDF2_ITERATIONS || sealed.iterations > MAX_PBKDF2_ITERATIONS) {
     throw new LockError("잠금 설정을 열 수 없어요.");
   }
-  const salt = fromBase64(sealed.salt);
-  const iv = fromBase64(sealed.iv);
+  let salt: Uint8Array;
+  let iv: Uint8Array;
+  try {
+    salt = fromBase64(sealed.salt);
+    iv = fromBase64(sealed.iv);
+  } catch {
+    throw new LockError("잠금 설정을 열 수 없어요.");
+  }
   if (salt.length !== SALT_BYTES || iv.length !== IV_BYTES) throw new LockError("잠금 설정을 열 수 없어요.");
   const key = await deriveKey(password, salt, sealed.iterations);
   const total = sealed.chunks.length;
-  const blob = JSON.parse(await decryptText(key, sealed.iv, sealed.ciphertext, aad(sealed.docId, "-1", total))) as SecretBlob;
+  let blob: SecretBlob;
+  try {
+    blob = JSON.parse(await decryptText(key, sealed.iv, sealed.ciphertext, aad(sealed.docId, "-1", total))) as SecretBlob;
+  } catch (error) {
+    if (error instanceof LockError) throw error;
+    throw new LockError("잠금 설정을 열 수 없어요.");
+  }
   let body = blob.body ?? "";
   if (sealed.chunks.length) {
     const parts: string[] = [];
@@ -139,6 +155,7 @@ export async function openSealed(sealed: SealedNote, password: string): Promise<
     keywords: blob.keywords,
     body,
     source_id: blob.source_id,
+    publisher: blob.publisher ?? "",
     url: blob.url,
     pdf_url: blob.pdf_url,
     author: blob.author,
@@ -158,6 +175,7 @@ export async function lockResearchNote(note: ResearchNote, password: string, hid
     hideTitle,
     docId,
     sourceId: note.source_id,
+    publisher: note.publisher,
     url: note.url,
     pdfUrl: note.pdf_url,
     author: note.author,
@@ -168,6 +186,7 @@ export async function lockResearchNote(note: ResearchNote, password: string, hid
     ...note,
     doc_id: docId,
     title: sealed.publicTitle,
+    publisher: "",
     source_id: "",
     url: "",
     pdf_url: "",
@@ -209,6 +228,7 @@ export async function unlockResearchNote(note: ResearchNote, password: string): 
     keywords: opened.keywords,
     body: opened.body,
     source_id: opened.source_id,
+    publisher: opened.publisher,
     url: opened.url,
     pdf_url: opened.pdf_url,
     author: opened.author,

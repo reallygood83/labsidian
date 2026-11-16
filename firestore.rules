@@ -5,6 +5,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function configuredAdmin() {
+      return "__LABSIDIAN_ADMIN_UID__";
+    }
+
     function library() {
       return get(/databases/$(database)/documents/config/library).data;
     }
@@ -18,7 +26,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() && library().adminUid == request.auth.uid;
+      return verified() && library().adminUid == request.auth.uid && request.auth.uid == configuredAdmin();
     }
 
     function teamDoc(teamId) {
@@ -30,7 +38,14 @@ service cloud.firestore {
     }
 
     function isMember(teamId) {
-      return signedIn() && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+      return verified() && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+
+    function displayOk(data) {
+      return data.display_name is string
+        && data.display_name.size() > 0
+        && data.display_name.size() <= 80
+        && (personal() || data.display_name == get(/databases/$(database)/documents/teams/$(data.team_id)/members/$(request.auth.uid)).data.displayName);
     }
 
     function shortString(data, key, max) {
@@ -53,18 +68,13 @@ service cloud.firestore {
           'title', 'series', 'source', 'source_id', 'team_id', 'doc_id', 'type', 'publisher',
           'author', 'published', 'url', 'pdf_url', 'query', 'keywords', 'collected', 'converter',
           'convert_warnings', 'summary_model', 'team_shared', 'tags', 'summary', 'body', 'excerpt',
-          'owner_email', 'owner_uid', 'display_name', 'uploaded_at', 'locked', 'title_hidden',
+          'owner_uid', 'display_name', 'uploaded_at', 'locked', 'title_hidden',
           'lock_salt', 'lock_iterations', 'lock_iv', 'lock_ciphertext', 'chunk_count', 'briefing_public'
         ])
         && data.briefing_public is bool
         && (personal() || data.team_id == libraryTeam())
         && data.owner_uid is string
-        && data.owner_email is string
-        && data.owner_email.size() > 3
-        && data.owner_email.size() < 200
-        && data.display_name is string
-        && data.display_name.size() > 0
-        && data.display_name.size() <= 80
+        && displayOk(data)
         && shortString(data, 'title', 300)
         && shortString(data, 'source_id', 200)
         && shortString(data, 'url', 2000)
@@ -82,14 +92,14 @@ service cloud.firestore {
     }
 
     function ownsNote(data) {
-      return data.owner_uid == request.auth.uid
-        && data.owner_email == request.auth.token.email;
+      return data.owner_uid == request.auth.uid;
     }
 
     match /config/library {
       allow get: if isAdmin();
       allow list: if false;
-      allow create: if signedIn()
+      allow create: if verified()
+        && request.auth.uid == configuredAdmin()
         && request.resource.data.keys().hasOnly(['adminUid', 'teamId', 'mode'])
         && request.resource.data.adminUid == request.auth.uid
         && (request.resource.data.mode == "personal" || request.resource.data.mode == "team")
@@ -106,19 +116,28 @@ service cloud.firestore {
     // 브리핑은 지정된 팀만 읽습니다. 쓰기는 그 팀의 멤버만 합니다.
     match /research_notes/{noteId} {
       allow read: if personal()
-        ? (resource.data.briefing_public == true || (signedIn() && resource.data.owner_uid == request.auth.uid && request.auth.uid == library().adminUid))
-        : resource.data.team_id == libraryTeam();
+        ? (
+          (resource.data.briefing_public == true && resource.data.owner_uid == library().adminUid)
+          || (verified() && resource.data.owner_uid == request.auth.uid && request.auth.uid == library().adminUid)
+        )
+        : (
+          resource.data.team_id == libraryTeam()
+          && (
+            resource.data.briefing_public == true
+            || (verified() && isMember(resource.data.team_id) && resource.data.owner_uid == request.auth.uid)
+          )
+        );
 
       allow create: if personal()
-        ? (signedIn() && request.auth.uid == library().adminUid && noteShape(request.resource.data) && ownsNote(request.resource.data))
+        ? (verified() && request.auth.uid == library().adminUid && noteShape(request.resource.data) && ownsNote(request.resource.data))
         : (isMember(request.resource.data.team_id) && noteShape(request.resource.data) && ownsNote(request.resource.data));
 
       allow update: if personal()
-        ? (signedIn() && request.auth.uid == library().adminUid && resource.data.owner_uid == request.auth.uid && noteShape(request.resource.data) && ownsNote(request.resource.data))
+        ? (verified() && request.auth.uid == library().adminUid && resource.data.owner_uid == request.auth.uid && noteShape(request.resource.data) && ownsNote(request.resource.data))
         : (isMember(resource.data.team_id) && resource.data.owner_uid == request.auth.uid && noteShape(request.resource.data) && ownsNote(request.resource.data) && request.resource.data.team_id == resource.data.team_id);
 
       allow delete: if personal()
-        ? (signedIn() && request.auth.uid == library().adminUid && resource.data.owner_uid == request.auth.uid)
+        ? (verified() && request.auth.uid == library().adminUid && resource.data.owner_uid == request.auth.uid)
         : (isMember(resource.data.team_id) && resource.data.owner_uid == request.auth.uid && resource.data.team_id == libraryTeam());
 
       match /chunks/{chunkId} {
@@ -126,12 +145,21 @@ service cloud.firestore {
           return get(/databases/$(database)/documents/research_notes/$(noteId)).data;
         }
         allow read: if personal()
-          ? (parent().briefing_public == true || (signedIn() && parent().owner_uid == request.auth.uid && request.auth.uid == library().adminUid))
-          : parent().team_id == libraryTeam();
-        allow delete: if signedIn()
+          ? (
+            (parent().briefing_public == true && parent().owner_uid == library().adminUid)
+            || (verified() && parent().owner_uid == request.auth.uid && request.auth.uid == library().adminUid)
+          )
+          : (
+            parent().team_id == libraryTeam()
+            && (
+              parent().briefing_public == true
+              || (verified() && isMember(parent().team_id) && parent().owner_uid == request.auth.uid)
+            )
+          );
+        allow delete: if verified()
           && parent().owner_uid == request.auth.uid
           && (personal() ? request.auth.uid == library().adminUid : isMember(parent().team_id));
-        allow create, update: if signedIn()
+        allow create, update: if verified()
           && parent().owner_uid == request.auth.uid
           && (personal() ? request.auth.uid == library().adminUid : isMember(parent().team_id))
           && request.resource.data.keys().hasOnly(['index', 'text', 'iv', 'ciphertext'])
@@ -167,7 +195,7 @@ service cloud.firestore {
       match /members/{userId} {
         allow get: if isOwner(teamId) || (signedIn() && request.auth.uid == userId);
         allow list: if isOwner(teamId);
-        allow create: if signedIn()
+        allow create: if verified()
           && request.auth.uid == userId
           && teamId == libraryTeam()
           && request.resource.data.keys().hasOnly(['codeHash', 'displayName'])
