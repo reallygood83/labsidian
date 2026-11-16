@@ -10,6 +10,7 @@ export interface SearchHit {
   remoteId: string;
   title: string;
   url: string;
+  doi?: string;
   published: string;
   authors: string[];
   publisher: string;

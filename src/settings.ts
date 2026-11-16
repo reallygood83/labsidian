@@ -33,15 +33,21 @@ export interface LabsidianSettings {
   dailySummaryLimit: number;
   summaryCountDate: string;
   summaryCount: number;
+  libraryMode: "solo" | "personal" | "team";
+  shareOnBriefing: boolean;
   firebaseEnabled: boolean;
   firebaseProjectId: string;
   firebaseApiKey: string;
   firebaseEmail: string;
+  displayName: string;
   teamId: string;
+  teamName: string;
+  codeSalt: string;
   briefingUrl: string;
   recentQueries: string[];
   lastSyncAt: string;
   lastSyncCount: number;
+  tourSeen: boolean;
 }
 
 const FIELDS: FieldToggles = {
@@ -79,15 +85,21 @@ export const DEFAULT_SETTINGS: LabsidianSettings = {
   dailySummaryLimit: 20,
   summaryCountDate: "",
   summaryCount: 0,
+  libraryMode: "solo",
+  shareOnBriefing: false,
   firebaseEnabled: false,
   firebaseProjectId: "",
   firebaseApiKey: "",
   firebaseEmail: "",
+  displayName: "",
   teamId: "",
+  teamName: "",
+  codeSalt: "",
   briefingUrl: "",
   recentQueries: [],
   lastSyncAt: "",
   lastSyncCount: 0,
+  tourSeen: false,
 };
 
 const FORBIDDEN = ["password", "refreshToken", "idToken", "kciKey", "rissKey", "geminiKey", "openaiKey", "serviceAccount"];
@@ -113,15 +125,21 @@ export function mergeSettings(raw: unknown): LabsidianSettings {
     dailySummaryLimit: int(record.dailySummaryLimit, 20, 0, 500),
     summaryCountDate: str(record.summaryCountDate, ""),
     summaryCount: int(record.summaryCount, 0, 0, 100000),
+    libraryMode: record.libraryMode === "personal" || record.libraryMode === "team" ? record.libraryMode : "solo",
+    shareOnBriefing: record.shareOnBriefing === true,
     firebaseEnabled: record.firebaseEnabled === true,
     firebaseProjectId: str(record.firebaseProjectId, "").trim(),
     firebaseApiKey: str(record.firebaseApiKey, "").trim(),
     firebaseEmail: str(record.firebaseEmail, "").trim(),
+    displayName: str(record.displayName, "").trim(),
     teamId: str(record.teamId, "").trim(),
+    teamName: str(record.teamName, "").trim(),
+    codeSalt: str(record.codeSalt, "").trim(),
     briefingUrl: str(record.briefingUrl, "").trim(),
     recentQueries: stringList(record.recentQueries).slice(0, 8),
     lastSyncAt: str(record.lastSyncAt, ""),
     lastSyncCount: int(record.lastSyncCount, 0, 0, 100000),
+    tourSeen: record.tourSeen === true,
     sources: {
       kofic: sources.kofic !== false,
       kocca: sources.kocca !== false,

@@ -5,6 +5,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function library() {
+      return get(/databases/$(database)/documents/config/library).data;
+    }
+
+    function libraryTeam() {
+      return library().teamId;
+    }
+
+    function personal() {
+      return library().mode == "personal";
+    }
+
+    function isAdmin() {
+      return signedIn() && library().adminUid == request.auth.uid;
+    }
+
     function teamDoc(teamId) {
       return get(/databases/$(database)/documents/teams/$(teamId));
     }
@@ -17,43 +33,148 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
     }
 
-    // 브리핑은 로그인 없이 읽습니다. 쓰기는 팀코드를 맞추고 가입한 멤버만 합니다.
+    function shortString(data, key, max) {
+      return !data.keys().hasAny([key]) || (data[key] is string && data[key].size() <= max);
+    }
+
+    function iterationsOk(data) {
+      return !data.keys().hasAny(['lock_iterations'])
+        || (
+          data.lock_iterations is int
+          && (
+            data.lock_iterations == 0
+            || (data.lock_iterations >= 310000 && data.lock_iterations <= 2000000)
+          )
+        );
+    }
+
+    function noteShape(data) {
+      return data.keys().hasOnly([
+          'title', 'series', 'source', 'source_id', 'team_id', 'doc_id', 'type', 'publisher',
+          'author', 'published', 'url', 'pdf_url', 'query', 'keywords', 'collected', 'converter',
+          'convert_warnings', 'summary_model', 'team_shared', 'tags', 'summary', 'body', 'excerpt',
+          'owner_email', 'owner_uid', 'display_name', 'uploaded_at', 'locked', 'title_hidden',
+          'lock_salt', 'lock_iterations', 'lock_iv', 'lock_ciphertext', 'chunk_count', 'briefing_public'
+        ])
+        && data.briefing_public is bool
+        && (personal() || data.team_id == libraryTeam())
+        && data.owner_uid is string
+        && data.owner_email is string
+        && data.owner_email.size() > 3
+        && data.owner_email.size() < 200
+        && data.display_name is string
+        && data.display_name.size() > 0
+        && data.display_name.size() <= 80
+        && shortString(data, 'title', 300)
+        && shortString(data, 'source_id', 200)
+        && shortString(data, 'url', 2000)
+        && shortString(data, 'pdf_url', 2000)
+        && shortString(data, 'query', 200)
+        && shortString(data, 'summary', 8000)
+        && shortString(data, 'body', 700000)
+        && iterationsOk(data)
+        && (!data.keys().hasAny(['locked']) || data.locked is bool)
+        && (
+          !data.keys().hasAny(['locked'])
+          || data.locked == false
+          || (data.lock_iterations is int && data.lock_iterations >= 310000 && data.lock_iterations <= 2000000)
+        );
+    }
+
+    function ownsNote(data) {
+      return data.owner_uid == request.auth.uid
+        && data.owner_email == request.auth.token.email;
+    }
+
+    match /config/library {
+      allow get: if isAdmin();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['adminUid', 'teamId', 'mode'])
+        && request.resource.data.adminUid == request.auth.uid
+        && (request.resource.data.mode == "personal" || request.resource.data.mode == "team")
+        && request.resource.data.teamId is string
+        && request.resource.data.teamId.size() >= 8
+        && request.resource.data.teamId.size() <= 80;
+      allow update: if isAdmin()
+        && request.resource.data.adminUid == resource.data.adminUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mode', 'teamId'])
+        && (request.resource.data.mode == "personal" || request.resource.data.mode == "team");
+      allow delete: if false;
+    }
+
+    // 브리핑은 지정된 팀만 읽습니다. 쓰기는 그 팀의 멤버만 합니다.
     match /research_notes/{noteId} {
-      allow read: if true;
+      allow read: if personal()
+        ? (resource.data.briefing_public == true || (signedIn() && resource.data.owner_uid == request.auth.uid && request.auth.uid == library().adminUid))
+        : resource.data.team_id == libraryTeam();
 
-      allow create: if isMember(request.resource.data.team_id)
-        && request.resource.data.owner_uid == request.auth.uid;
+      allow create: if personal()
+        ? (signedIn() && request.auth.uid == library().adminUid && noteShape(request.resource.data) && ownsNote(request.resource.data))
+        : (isMember(request.resource.data.team_id) && noteShape(request.resource.data) && ownsNote(request.resource.data));
 
-      allow update, delete: if isMember(resource.data.team_id)
-        && resource.data.owner_uid == request.auth.uid
-        && request.resource.data.owner_uid == resource.data.owner_uid
-        && request.resource.data.team_id == resource.data.team_id;
+      allow update: if personal()
+        ? (signedIn() && request.auth.uid == library().adminUid && resource.data.owner_uid == request.auth.uid && noteShape(request.resource.data) && ownsNote(request.resource.data))
+        : (isMember(resource.data.team_id) && resource.data.owner_uid == request.auth.uid && noteShape(request.resource.data) && ownsNote(request.resource.data) && request.resource.data.team_id == resource.data.team_id);
+
+      allow delete: if personal()
+        ? (signedIn() && request.auth.uid == library().adminUid && resource.data.owner_uid == request.auth.uid)
+        : (isMember(resource.data.team_id) && resource.data.owner_uid == request.auth.uid && resource.data.team_id == libraryTeam());
 
       match /chunks/{chunkId} {
-        allow read: if true;
-        allow create, update, delete: if signedIn()
-          && get(/databases/$(database)/documents/research_notes/$(noteId)).data.owner_uid == request.auth.uid
-          && isMember(get(/databases/$(database)/documents/research_notes/$(noteId)).data.team_id);
+        function parent() {
+          return get(/databases/$(database)/documents/research_notes/$(noteId)).data;
+        }
+        allow read: if personal()
+          ? (parent().briefing_public == true || (signedIn() && parent().owner_uid == request.auth.uid && request.auth.uid == library().adminUid))
+          : parent().team_id == libraryTeam();
+        allow delete: if signedIn()
+          && parent().owner_uid == request.auth.uid
+          && (personal() ? request.auth.uid == library().adminUid : isMember(parent().team_id));
+        allow create, update: if signedIn()
+          && parent().owner_uid == request.auth.uid
+          && (personal() ? request.auth.uid == library().adminUid : isMember(parent().team_id))
+          && request.resource.data.keys().hasOnly(['index', 'text', 'iv', 'ciphertext'])
+          && request.resource.data.index is int
+          && shortString(request.resource.data, 'text', 800000)
+          && shortString(request.resource.data, 'iv', 40)
+          && shortString(request.resource.data, 'ciphertext', 900000);
       }
     }
 
     match /teams/{teamId} {
-      allow get: if isOwner(teamId) || isMember(teamId);
+      allow get: if isOwner(teamId);
       allow list: if false;
-      allow create: if signedIn()
+      allow create: if isAdmin()
+        && (library().mode == "personal" || teamId == libraryTeam())
+        && request.resource.data.keys().hasOnly(['ownerUid', 'codeHash', 'codeSalt'])
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.codeHash is string
-        && request.resource.data.codeHash.size() == 64;
+        && request.resource.data.codeHash.size() == 64
+        && request.resource.data.codeSalt is string
+        && request.resource.data.codeSalt.size() >= 16
+        && request.resource.data.codeSalt.size() <= 64;
       allow update: if isOwner(teamId)
-        && request.resource.data.ownerUid == resource.data.ownerUid;
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['codeHash', 'codeSalt'])
+        && request.resource.data.codeHash is string
+        && request.resource.data.codeHash.size() == 64
+        && request.resource.data.codeSalt is string
+        && request.resource.data.codeSalt.size() >= 16
+        && request.resource.data.codeSalt.size() <= 64;
       allow delete: if isOwner(teamId);
 
       match /members/{userId} {
-        allow get: if signedIn() && (isOwner(teamId) || request.auth.uid == userId);
+        allow get: if isOwner(teamId) || (signedIn() && request.auth.uid == userId);
         allow list: if isOwner(teamId);
         allow create: if signedIn()
           && request.auth.uid == userId
-          && request.resource.data.codeHash == teamDoc(teamId).data.codeHash;
+          && teamId == libraryTeam()
+          && request.resource.data.keys().hasOnly(['codeHash', 'displayName'])
+          && request.resource.data.codeHash == teamDoc(teamId).data.codeHash
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() > 0
+          && request.resource.data.displayName.size() <= 80;
         allow update: if false;
         allow delete: if isOwner(teamId);
       }

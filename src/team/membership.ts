@@ -1,4 +1,4 @@
-import { hashTeamCode } from "../../packages/shared/team";
+import { generateCodeSalt, hashTeamCode } from "../../packages/shared/team";
 import { LabsidianError } from "../errors";
 import type { HttpClient } from "../http/types";
 
@@ -10,8 +10,46 @@ function authHeaders(idToken: string): Record<string, string> {
   return { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" };
 }
 
-export async function createTeam(http: HttpClient, projectId: string, idToken: string, teamId: string, ownerUid: string, code: string): Promise<void> {
-  const codeHash = await hashTeamCode(code);
+export function explainFirestoreStatus(status: number): string {
+  if (status === 403) return "이 팀에 쓸 권한이 없어요. 관리자에게 초대 링크를 다시 받아 주세요.";
+  if (status === 401) return "로그인이 만료됐어요. 설정에서 다시 로그인해 주세요.";
+  return "팀 서고에 연결하지 못했어요. 인터넷과 Firebase 설정을 확인해 주세요.";
+}
+
+export async function createLibrary(http: HttpClient, projectId: string, idToken: string, teamId: string, adminUid: string, mode: "personal" | "team"): Promise<void> {
+  const response = await http.request({
+    url: `${root(projectId)}/config?documentId=library`,
+    method: "POST",
+    headers: authHeaders(idToken),
+    body: JSON.stringify({
+      fields: {
+        adminUid: { stringValue: adminUid },
+        teamId: { stringValue: teamId },
+        mode: { stringValue: mode },
+      },
+    }),
+  });
+  if (response.status === 409) return;
+  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
+}
+
+export async function updateLibrary(http: HttpClient, projectId: string, idToken: string, teamId: string, mode: "personal" | "team"): Promise<void> {
+  const response = await http.request({
+    url: `${root(projectId)}/config/library?updateMask.fieldPaths=teamId&updateMask.fieldPaths=mode`,
+    method: "PATCH",
+    headers: authHeaders(idToken),
+    body: JSON.stringify({
+      fields: {
+        teamId: { stringValue: teamId },
+        mode: { stringValue: mode },
+      },
+    }),
+  });
+  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
+}
+
+export async function createTeam(http: HttpClient, projectId: string, idToken: string, teamId: string, ownerUid: string, code: string, salt: string): Promise<void> {
+  const codeHash = await hashTeamCode(code, salt);
   const response = await http.request({
     url: `${root(projectId)}/teams?documentId=${encodeURIComponent(teamId)}`,
     method: "POST",
@@ -20,27 +58,34 @@ export async function createTeam(http: HttpClient, projectId: string, idToken: s
       fields: {
         ownerUid: { stringValue: ownerUid },
         codeHash: { stringValue: codeHash },
+        codeSalt: { stringValue: salt },
       },
     }),
   });
-  if (response.status >= 400) {
-    throw new LabsidianError(`팀을 만들지 못했어요 (${response.status}). 규칙을 게시했는지 확인해 주세요.`);
-  }
+  if (response.status === 409) return;
+  if (response.status >= 400) throw new LabsidianError(`${explainFirestoreStatus(response.status)} 규칙을 게시했는지 확인해 주세요.`);
 }
 
-export async function updateTeamCode(http: HttpClient, projectId: string, idToken: string, teamId: string, code: string): Promise<void> {
-  const codeHash = await hashTeamCode(code);
+export async function updateTeamCode(http: HttpClient, projectId: string, idToken: string, teamId: string, code: string): Promise<string> {
+  const salt = generateCodeSalt();
+  const codeHash = await hashTeamCode(code, salt);
   const response = await http.request({
-    url: `${root(projectId)}/teams/${encodeURIComponent(teamId)}?updateMask.fieldPaths=codeHash`,
+    url: `${root(projectId)}/teams/${encodeURIComponent(teamId)}?updateMask.fieldPaths=codeHash&updateMask.fieldPaths=codeSalt`,
     method: "PATCH",
     headers: authHeaders(idToken),
-    body: JSON.stringify({ fields: { codeHash: { stringValue: codeHash } } }),
+    body: JSON.stringify({
+      fields: {
+        codeHash: { stringValue: codeHash },
+        codeSalt: { stringValue: salt },
+      },
+    }),
   });
-  if (response.status >= 400) throw new LabsidianError(`팀코드를 바꾸지 못했어요 (${response.status}).`);
+  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
+  return salt;
 }
 
-export async function joinTeam(http: HttpClient, projectId: string, idToken: string, teamId: string, uid: string, email: string, code: string): Promise<void> {
-  const codeHash = await hashTeamCode(code);
+export async function joinTeam(http: HttpClient, projectId: string, idToken: string, teamId: string, uid: string, displayName: string, code: string, salt: string): Promise<void> {
+  const codeHash = await hashTeamCode(code, salt);
   const response = await http.request({
     url: `${root(projectId)}/teams/${encodeURIComponent(teamId)}/members?documentId=${encodeURIComponent(uid)}`,
     method: "POST",
@@ -48,19 +93,17 @@ export async function joinTeam(http: HttpClient, projectId: string, idToken: str
     body: JSON.stringify({
       fields: {
         codeHash: { stringValue: codeHash },
-        email: { stringValue: email },
+        displayName: { stringValue: displayName },
       },
     }),
   });
   if (response.status === 409) return;
-  if (response.status >= 400) {
-    throw new LabsidianError("팀코드가 맞지 않거나 가입이 거절됐어요. 관리자에게 새 초대 링크를 요청해 주세요.");
-  }
+  if (response.status >= 400) throw new LabsidianError("팀코드가 맞지 않아요. 관리자에게 새 초대 링크를 받아 주세요.");
 }
 
 export interface TeamMember {
   uid: string;
-  email: string;
+  displayName: string;
 }
 
 export async function listMembers(http: HttpClient, projectId: string, idToken: string, teamId: string): Promise<TeamMember[]> {
@@ -69,10 +112,10 @@ export async function listMembers(http: HttpClient, projectId: string, idToken: 
     headers: { Authorization: `Bearer ${idToken}` },
   });
   if (response.status >= 400) return [];
-  const payload = JSON.parse(response.text) as { documents?: { name?: string; fields?: { email?: { stringValue?: string } } }[] };
+  const payload = JSON.parse(response.text) as { documents?: { name?: string; fields?: { displayName?: { stringValue?: string } } }[] };
   return (payload.documents ?? []).map((doc) => ({
     uid: doc.name?.split("/").pop() ?? "",
-    email: doc.fields?.email?.stringValue ?? "",
+    displayName: doc.fields?.displayName?.stringValue ?? "",
   })).filter((member) => member.uid);
 }
 
@@ -82,7 +125,7 @@ export async function removeMember(http: HttpClient, projectId: string, idToken:
     method: "DELETE",
     headers: { Authorization: `Bearer ${idToken}` },
   });
-  if (response.status >= 400 && response.status !== 404) {
-    throw new LabsidianError(`멤버를 빼지 못했어요 (${response.status}).`);
-  }
+  if (response.status >= 400 && response.status !== 404) throw new LabsidianError(explainFirestoreStatus(response.status));
 }
+
+export { generateCodeSalt };

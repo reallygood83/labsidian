@@ -1,6 +1,29 @@
 import { normalizePath, type App, type TFile } from "obsidian";
 import { sanitizeFileBase } from "./text";
 
+export interface SavedNoteRef {
+  sourceId: string;
+  doi: string;
+  url: string;
+  path: string;
+  file: TFile;
+}
+
+export function savedNoteRefs(app: App): SavedNoteRef[] {
+  const refs: SavedNoteRef[] = [];
+  for (const file of app.vault.getMarkdownFiles()) {
+    const front = app.metadataCache.getFileCache(file)?.frontmatter;
+    refs.push({
+      sourceId: typeof front?.source_id === "string" ? front.source_id : "",
+      doi: typeof front?.doi === "string" ? front.doi : "",
+      url: typeof front?.url === "string" ? front.url : "",
+      path: file.path,
+      file,
+    });
+  }
+  return refs;
+}
+
 export function notesBySourceId(app: App): Map<string, TFile> {
   const map = new Map<string, TFile>();
   for (const file of app.vault.getMarkdownFiles()) {

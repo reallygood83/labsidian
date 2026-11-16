@@ -2,6 +2,11 @@ export interface PublicFirebaseConfig {
   projectId: string;
   apiKey: string;
   teamId: string;
+  teamName: string;
+  adminName: string;
+  codeSalt: string;
+  mode: "personal" | "team";
+  ownerUid: string;
   briefingUrl: string;
 }
 
@@ -49,6 +54,11 @@ export function encodePublicConfig(config: PublicFirebaseConfig): string {
     projectId: config.projectId,
     apiKey: config.apiKey,
     teamId: config.teamId,
+    teamName: config.teamName,
+    adminName: config.adminName,
+    codeSalt: config.codeSalt,
+    mode: config.mode,
+    ownerUid: config.ownerUid,
     briefingUrl: config.briefingUrl,
   }));
 }
@@ -60,23 +70,28 @@ export function decodePublicConfig(value: string): PublicFirebaseConfig {
   } catch {
     throw new Error("초대 설정을 읽지 못했어요. 링크를 다시 받아 주세요.");
   }
-  if (!parsed.projectId || !parsed.apiKey || !parsed.teamId) {
+  if (!parsed.projectId || !parsed.apiKey || !parsed.teamId || !parsed.codeSalt) {
     throw new Error("초대 설정에 프로젝트 정보가 없어요. 관리자에게 새 링크를 요청해 주세요.");
   }
   return {
     projectId: parsed.projectId,
     apiKey: parsed.apiKey,
     teamId: parsed.teamId,
+    teamName: parsed.teamName || "팀",
+    adminName: parsed.adminName || "관리자",
+    codeSalt: parsed.codeSalt,
+    mode: parsed.mode === "personal" ? "personal" : "team",
+    ownerUid: parsed.ownerUid ?? "",
     briefingUrl: parsed.briefingUrl ?? "",
   };
 }
 
 export function buildInviteLinks(config: PublicFirebaseConfig, code: string): { obsidian: string; web: string } {
   const c = encodePublicConfig(config);
-  const t = encodeURIComponent(code);
-  const obsidian = `obsidian://labsidian-join?c=${c}&t=${t}`;
+  const fragment = `t=${encodeURIComponent(code)}`;
+  const obsidian = `obsidian://labsidian-join?c=${c}#${fragment}`;
   const web = config.briefingUrl
-    ? `${config.briefingUrl.replace(/\/$/, "")}/join?c=${c}&t=${t}`
+    ? `${config.briefingUrl.replace(/\/$/, "")}/join?c=${c}#${fragment}`
     : "";
   return { obsidian, web };
 }
@@ -86,14 +101,25 @@ export function parseInviteParams(c: string, t: string): { config: PublicFirebas
   return { config: decodePublicConfig(c), code: decodeURIComponent(t) };
 }
 
-export function parseInviteUrl(url: string): { config: PublicFirebaseConfig; code: string } {
-  const parsed = new URL(url);
-  return parseInviteParams(parsed.searchParams.get("c") ?? "", parsed.searchParams.get("t") ?? "");
+export function codeFromFragment(hash: string): string {
+  const params = new URLSearchParams(hash.replace(/^#/, ""));
+  return params.get("t") ?? "";
 }
 
-export async function hashTeamCode(code: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code.trim()));
+export function parseInviteUrl(url: string): { config: PublicFirebaseConfig; code: string } {
+  const parsed = new URL(url);
+  const code = codeFromFragment(parsed.hash);
+  return parseInviteParams(parsed.searchParams.get("c") ?? "", code);
+}
+
+export async function hashTeamCode(code: string, salt: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${salt}:${code.trim()}`));
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export function generateCodeSalt(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function generateTeamCode(): string {

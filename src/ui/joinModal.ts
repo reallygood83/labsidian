@@ -3,7 +3,7 @@ import { Modal, Notice, type App } from "obsidian";
 export class JoinModal extends Modal {
   constructor(
     app: App,
-    private readonly join: (email: string, password: string, mode: "signup" | "login") => Promise<string>,
+    private readonly join: (email: string, password: string, displayName: string, mode: "signup" | "login") => Promise<string>,
   ) {
     super(app);
   }
@@ -13,10 +13,17 @@ export class JoinModal extends Modal {
     this.modalEl.addClass("lab-modal-upload");
     const shell = this.contentEl.createDiv({ cls: "lab-upload" });
     shell.createEl("h3", { text: "팀에 들어가기" });
-    shell.createEl("p", { cls: "lab-note", text: "메일과 비밀번호만 입력하면 돼요. 설정 파일은 건드리지 않아요." });
+    shell.createEl("p", { cls: "lab-note", text: "메일, 비밀번호, 친구에게 보일 이름을 입력하면 팀에 들어가요." });
     const emailRow = shell.createDiv({ cls: "lab-row" });
     emailRow.createSpan({ text: "이메일" });
     const email = emailRow.createEl("input", { cls: "lab-search-input", attr: { type: "email" } });
+    const nameRow = shell.createDiv({ cls: "lab-row" });
+    nameRow.createSpan({ text: "표시 이름" });
+    const displayName = nameRow.createEl("input", { cls: "lab-search-input", attr: { placeholder: "예: 김연구" } });
+    email.addEventListener("input", () => {
+      if (displayName.value.trim()) return;
+      displayName.placeholder = email.value.split("@")[0] || "예: 김연구";
+    });
     const passwordRow = shell.createDiv({ cls: "lab-row" });
     passwordRow.createSpan({ text: "비밀번호" });
     const password = passwordRow.createEl("input", { cls: "lab-search-input", attr: { type: "password" } });
@@ -31,7 +38,8 @@ export class JoinModal extends Modal {
         return;
       }
       try {
-        const message = await this.join(email.value.trim(), password.value, mode);
+        const named = displayName.value.trim() || email.value.split("@")[0] || "팀원";
+        const message = await this.join(email.value.trim(), password.value, named, mode);
         password.value = "";
         new Notice(message);
         this.close();

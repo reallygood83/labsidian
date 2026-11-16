@@ -7,6 +7,7 @@ import { searchSources } from "../sources/search";
 import { SOURCES } from "../sources/registry";
 import type { HttpClient } from "../http/types";
 import type { SearchGroup, SearchHit, SourceContext, SourceId } from "../sources/types";
+import { findDuplicate, previewLines, saveButtonLabel, yearOf, type SavedIdentity } from "../collect/usability";
 import { iconLabel, spinner } from "./dom";
 
 export interface SearchLaunch {
@@ -14,7 +15,10 @@ export interface SearchLaunch {
   secrets: SecretStore;
   http: HttpClient;
   savedIds: Set<string>;
+  saved: SavedIdentity[];
+  initialQuery: string;
   onRemember: (query: string) => void;
+  onOpen: (path: string) => void;
   onCollect: (hits: SearchHit[], query: string, summarize: boolean) => void;
 }
 
@@ -66,7 +70,9 @@ export class SearchModal extends Modal {
       this.enabled.add(source.id);
     }
     this.summarize = this.launch.settings.aiEnabled;
+    this.query = this.launch.initialQuery;
     this.paint();
+    if (this.query.trim()) void this.runSearch();
     this.contentEl.querySelector<HTMLInputElement>(".lab-search-input")?.focus();
   }
 
@@ -196,7 +202,8 @@ export class SearchModal extends Modal {
     const split = shell.createDiv({ cls: "lab-split" });
     const list = split.createDiv({ cls: "lab-list" });
     hits.forEach((hit, index) => {
-      const saved = this.launch.savedIds.has(hit.sourceId);
+      const duplicate = findDuplicate(hit, this.launch.saved);
+      const saved = Boolean(duplicate);
       const row = list.createDiv({ cls: `lab-hit${this.previewId === hit.sourceId ? " is-active" : ""}${saved ? " is-saved" : ""}` });
       const box = row.createEl("input", { attr: { type: "checkbox" } });
       box.checked = this.checked.has(hit.sourceId);
@@ -213,12 +220,19 @@ export class SearchModal extends Modal {
       const meta = main.createDiv({ cls: "lab-meta" });
       meta.createSpan({ cls: "lab-badge", text: labelOf(hit.source), attr: { "data-source": hit.source } });
       if (hit.docType) meta.createSpan({ text: hit.docType });
-      if (hit.published) meta.createSpan({ text: formatDotDate(hit.published) });
-      if (hit.hasPdf) meta.createSpan({ cls: "lab-badge is-pdf", text: t("search.pdf") });
-      if (saved) {
+      const year = yearOf(hit.published);
+      if (year) meta.createSpan({ text: year });
+      if (hit.hasPdf) meta.createSpan({ cls: "lab-badge is-pdf", text: "PDF 있음" });
+      const preview = previewLines(hit.abstract);
+      if (preview) main.createDiv({ cls: "lab-hit-preview", text: preview });
+      if (saved && duplicate) {
         const savedBadge = meta.createSpan({ cls: "lab-badge is-saved" });
-        savedBadge.createSpan({ cls: "lab-saved-dot" });
-        savedBadge.createSpan({ text: t("search.saved") });
+        savedBadge.createSpan({ text: "이미 있어요" });
+        const open = meta.createEl("button", { cls: "lab-btn", text: "열기" });
+        open.addEventListener("click", (event) => {
+          event.stopPropagation();
+          this.launch.onOpen(duplicate.path);
+        });
       }
       row.addEventListener("click", () => {
         this.previewId = hit.sourceId;
@@ -269,7 +283,7 @@ export class SearchModal extends Modal {
     const right = footer.createDiv({ cls: "lab-row" });
     const chosen = hits.filter((hit) => this.checked.has(hit.sourceId) && !this.launch.savedIds.has(hit.sourceId));
     right.createSpan({ text: t("search.selected", { count: chosen.length }) });
-    const save = right.createEl("button", { cls: "lab-btn is-primary", text: t("search.save", { count: chosen.length }) });
+    const save = right.createEl("button", { cls: "lab-btn is-primary", text: saveButtonLabel(chosen.length) });
     save.disabled = chosen.length === 0;
     save.addEventListener("click", () => {
       this.launch.onCollect(chosen, this.query, this.summarize);

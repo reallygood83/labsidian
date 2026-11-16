@@ -58,6 +58,7 @@ function workToHit(work: OpenAlexWork): SearchHit | null {
     remoteId: short,
     title: work.display_name,
     url: landing,
+    doi: work.doi ?? "",
     published: work.publication_date ?? "",
     authors: uniqueAuthors((work.authorships ?? []).map((entry) => entry.author?.display_name ?? "")),
     publisher: "OpenAlex",

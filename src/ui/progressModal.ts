@@ -62,7 +62,7 @@ export class ProgressModal extends Modal {
     const done = this.session.doneCount;
     const bar = shell.createDiv({ cls: "lab-bar" });
     bar.createSpan({ attr: { style: `width:${total ? Math.round((done / total) * 100) : 0}%` } });
-    shell.createDiv({ cls: "lab-note", text: t("progress.status", { done, total }) });
+    shell.createDiv({ cls: "lab-note", text: `${done}/${total} 저장 중` });
     for (const job of this.session.jobs) this.paintJob(shell, job);
     if (this.session.finished) {
       const share = shell.createEl("button", { cls: "lab-btn is-primary", text: t("progress.share") });

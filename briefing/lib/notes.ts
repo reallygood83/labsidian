@@ -34,12 +34,14 @@ function num(fields: Record<string, FsValue>, key: string): number {
 export function noteFromDoc(doc: FsDoc): ResearchNote | null {
   const fields = doc.fields ?? {};
   const sourceId = str(fields, "source_id");
-  if (!sourceId) return null;
+  const docId = str(fields, "doc_id");
+  if (!sourceId && !docId) return null;
   return {
     title: str(fields, "title"),
     series: str(fields, "series"),
     source: str(fields, "source"),
     source_id: sourceId,
+    doc_id: docId,
     team_id: str(fields, "team_id"),
     type: str(fields, "type"),
     publisher: str(fields, "publisher"),
@@ -54,6 +56,8 @@ export function noteFromDoc(doc: FsDoc): ResearchNote | null {
     convert_warnings: num(fields, "convert_warnings"),
     summary_model: str(fields, "summary_model"),
     team_shared: true,
+    briefing_public: bool(fields, "briefing_public"),
+    display_name: str(fields, "display_name"),
     tags: list(fields, "tags"),
     summary: str(fields, "summary"),
     body: str(fields, "body"),
@@ -76,31 +80,40 @@ function bool(fields: Record<string, FsValue>, key: string): boolean {
   return Boolean(value && "booleanValue" in value && value.booleanValue);
 }
 
-export async function loadPublicNotes(projectId: string, apiKey: string): Promise<ResearchNote[]> {
-  const root = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/research_notes`;
-  const notes: ResearchNote[] = [];
-  let pageToken = "";
-  for (let page = 0; page < 3; page += 1) {
-    const url = new URL(root);
-    url.searchParams.set("pageSize", "100");
-    url.searchParams.set("key", apiKey);
-    if (pageToken) url.searchParams.set("pageToken", pageToken);
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Firestore ${response.status}`);
-    const payload = (await response.json()) as { documents?: (FsDoc & { name?: string })[]; nextPageToken?: string };
-    for (const doc of payload.documents ?? []) {
-      const note = noteFromDoc(doc);
-      if (!note) continue;
-      const count = num(doc.fields ?? {}, "chunk_count");
-      if (count > 0 && doc.name) {
-        const chunks = await loadChunks(doc.name, apiKey);
-        if (note.locked) note.locked_chunks = chunks.locked;
-        else note.body = chunks.text;
+export async function loadPublicNotes(projectId: string, apiKey: string, scope: { mode: "personal" | "team"; teamId: string; ownerUid: string }): Promise<ResearchNote[]> {
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${encodeURIComponent(apiKey)}`;
+  const where = scope.mode === "personal"
+    ? {
+        compositeFilter: {
+          op: "AND",
+          filters: [
+            { fieldFilter: { field: { fieldPath: "owner_uid" }, op: "EQUAL", value: { stringValue: scope.ownerUid } } },
+            { fieldFilter: { field: { fieldPath: "briefing_public" }, op: "EQUAL", value: { booleanValue: true } } },
+          ],
+        },
       }
-      notes.push(note);
+    : { fieldFilter: { field: { fieldPath: "team_id" }, op: "EQUAL", value: { stringValue: scope.teamId } } };
+  const response = await fetch(url, {
+    method: "POST",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ structuredQuery: { from: [{ collectionId: "research_notes" }], where, limit: 100 } }),
+  });
+  if (!response.ok) throw new Error("브리핑을 읽지 못했어요. 배포용 값의 팀 설정을 확인해 주세요.");
+  const payload = (await response.json()) as { document?: FsDoc & { name?: string } }[];
+  const notes: ResearchNote[] = [];
+  for (const row of payload) {
+    if (!row.document) continue;
+    const note = noteFromDoc(row.document);
+    if (!note) continue;
+    if (scope.mode === "personal" && !note.briefing_public) continue;
+    const count = num(row.document.fields ?? {}, "chunk_count");
+    if (count > 0 && row.document.name) {
+      const chunks = await loadChunks(row.document.name, apiKey);
+      if (note.locked) note.locked_chunks = chunks.locked;
+      else note.body = chunks.text;
     }
-    if (!payload.nextPageToken) break;
-    pageToken = payload.nextPageToken;
+    notes.push(note);
   }
   return notes;
 }

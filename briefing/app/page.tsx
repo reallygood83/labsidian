@@ -28,7 +28,7 @@ export default async function BriefingPage({ searchParams }: { searchParams: Pro
   let notes: ResearchNote[] = [];
   let error = "";
   try {
-    notes = await loadPublicNotes(projectId, apiKey);
+    notes = await loadPublicNotes(projectId, apiKey, { mode: config.mode, teamId: config.teamId, ownerUid: config.ownerUid });
   } catch (caught) {
     error = caught instanceof Error ? caught.message : "브리핑을 읽지 못했어요.";
   }

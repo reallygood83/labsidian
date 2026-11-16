@@ -38,6 +38,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
     root.empty();
     root.addClass("labsidian");
     root.addClass("lab-settings");
+    this.modeChoice(root);
     const tabs = root.createDiv({ cls: "lab-tabs" });
     for (const id of ["sources", "notes", "ai", "team", "about"] as const) {
       const button = tabs.createEl("button", { cls: `lab-tab${this.tab === id ? " is-on" : ""}`, text: t(`settings.${id}`) });
@@ -51,6 +52,69 @@ export class LabsidianSettingTab extends PluginSettingTab {
     if (this.tab === "ai") this.ai(root);
     if (this.tab === "team") this.team(root);
     if (this.tab === "about") this.about(root);
+  }
+
+  private modeChoice(root: HTMLElement): void {
+    const card = root.createDiv({ cls: "lab-card" });
+    const connected = this.plugin.settings.libraryMode !== "solo" && Boolean(this.plugin.settings.firebaseProjectId);
+    card.createEl("p", { cls: "lab-title", text: connected ? "연결됨" : "안 됨" });
+    card.createEl("p", { cls: "lab-note", text: this.plugin.settings.libraryMode === "team" ? "팀으로 쓰는 중이에요." : this.plugin.settings.libraryMode === "personal" ? "내 클라우드에 혼자 쓰는 중이에요." : "혼자 쓰기예요. 노트는 이 볼트에만 있어요." });
+    const row = card.createDiv({ cls: "lab-row" });
+    const solo = row.createEl("button", { cls: `lab-btn${this.plugin.settings.libraryMode === "solo" ? " is-primary" : ""}`, text: "혼자 쓰기" });
+    const team = row.createEl("button", { cls: `lab-btn${this.plugin.settings.libraryMode === "team" ? " is-primary" : ""}`, text: "팀으로 쓰기" });
+    solo.addEventListener("click", () => {
+      void this.chooseMode("solo");
+    });
+    team.addEventListener("click", () => {
+      void this.chooseMode("team");
+    });
+    if (this.plugin.settings.libraryMode !== "team") {
+      const cloud = card.createEl("button", { cls: "lab-btn", text: "내 클라우드 연결" });
+      cloud.addEventListener("click", () => {
+        void this.plugin.connectPersonalLibrary().then((message) => {
+          new Notice(message);
+          this.display();
+        }).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "내 클라우드를 연결하지 못했어요. 웹 설정을 저장하고 로그인해 주세요."));
+      });
+      const visibility = card.createEl("label", { cls: "lab-check" });
+      const toggle = visibility.createEl("input", { attr: { type: "checkbox" } });
+      toggle.checked = this.plugin.settings.shareOnBriefing;
+      visibility.createSpan({ text: "브리핑에 공개" });
+      card.createEl("p", { cls: "lab-note", text: "기본은 나만 보기예요. 공개로 고른 글만 브리핑에 나와요." });
+      toggle.addEventListener("change", () => {
+        this.plugin.settings.shareOnBriefing = toggle.checked;
+        void this.plugin.saveSettings();
+      });
+    }
+    const again = card.createEl("button", { cls: "lab-btn", text: "안내 다시 보기" });
+    again.addEventListener("click", () => {
+      this.plugin.settings.tourSeen = false;
+      void this.plugin.saveSettings();
+      this.plugin.openTour();
+    });
+    if (this.plugin.settings.libraryMode === "personal") {
+      const move = card.createEl("button", { cls: "lab-btn", text: "팀 서고로 옮기기" });
+      move.addEventListener("click", () => {
+        const ok = window.confirm("개인 서고의 글을 팀 서고로 옮길까요? 옮기면 팀원이 브리핑에서 볼 수 있어요.");
+        if (!ok) return;
+        void this.plugin.movePersonalNotesToTeam().then((message) => {
+          new Notice(message);
+          this.display();
+        }).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "글을 옮기지 못했어요. 로그인 상태를 확인해 주세요."));
+      });
+    }
+  }
+
+  private async chooseMode(mode: "solo" | "team"): Promise<void> {
+    if (mode === "solo") {
+      this.plugin.settings.libraryMode = "solo";
+      await this.plugin.saveSettings();
+      this.display();
+      return;
+    }
+    this.plugin.settings.libraryMode = "team";
+    await this.plugin.saveSettings();
+    this.display();
   }
 
   private sources(root: HTMLElement): void {
@@ -320,7 +384,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
       }
       for (const person of people) {
         const row = members.createDiv({ cls: "lab-row" });
-        row.createSpan({ text: person.email || person.uid });
+        row.createSpan({ text: person.displayName || person.uid });
         const remove = row.createEl("button", { cls: "lab-btn", text: "멤버 빼기" });
         remove.addEventListener("click", () => {
           void this.plugin.removeTeamMember(person.uid).then(() => paint());

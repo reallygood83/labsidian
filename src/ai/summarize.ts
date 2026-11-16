@@ -35,9 +35,9 @@ export async function summarize(http: HttpClient, provider: AiProvider, model: s
 
 async function gemini(http: HttpClient, model: string, key: string, prompt: string): Promise<string> {
   const response = await http.request({
-    url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,
+    url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
   });
   const payload = readJson(response.text, response.status, "Gemini");

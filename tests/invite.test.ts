@@ -15,6 +15,11 @@ const config: PublicFirebaseConfig = {
   projectId: "demo-labsidian",
   apiKey: "public-web-key",
   teamId: "team123",
+  teamName: "연구팀",
+  adminName: "김연구",
+  codeSalt: "00112233445566778899aabbccddeeff",
+  mode: "team",
+  ownerUid: "",
   briefingUrl: "https://briefing.example",
 };
 
@@ -24,17 +29,18 @@ describe("invite links", () => {
     expect(encoded).not.toContain("CODE99");
     expect(decodePublicConfig(encoded)).toEqual(config);
     const links = buildInviteLinks(config, "CODE99");
-    expect(links.obsidian.startsWith("obsidian://labsidian-join?")).toBe(true);
+    expect(links.obsidian.includes("#t=")).toBe(true);
+    expect(links.obsidian.includes("t=CODE99") && links.obsidian.indexOf("#") < links.obsidian.indexOf("t=CODE99")).toBe(true);
     expect(parseInviteUrl(links.obsidian)).toEqual({ config, code: "CODE99" });
     expect(parseInviteUrl(links.web).code).toBe("CODE99");
   });
 
   it("hashes the team code and does not store the code itself", async () => {
-    const hash = await hashTeamCode("CODE99");
+    const hash = await hashTeamCode("CODE99", "salt-value");
     expect(hash).toHaveLength(64);
     expect(hash).not.toContain("CODE99");
-    expect(await hashTeamCode("CODE99")).toBe(hash);
-    expect(await hashTeamCode("OTHER")).not.toBe(hash);
+    expect(await hashTeamCode("CODE99", "salt-value")).toBe(hash);
+    expect(await hashTeamCode("OTHER", "salt-value")).not.toBe(hash);
   });
 
   it("points each setup step at the Firebase console", () => {
@@ -52,7 +58,7 @@ describe("invite links", () => {
 
   it("ships the same rules the console copy button uses", () => {
     expect(FIRESTORE_RULES).toBe(readFileSync(new URL("../firestore.rules", import.meta.url), "utf8"));
-    expect(FIRESTORE_RULES).toContain("allow read: if true");
+    expect(FIRESTORE_RULES).toContain("briefing_public");
     expect(FIRESTORE_RULES).toContain("isMember");
   });
 });

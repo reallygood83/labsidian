@@ -39,7 +39,7 @@ export class UploadModal extends Modal {
     lockRow.createSpan({ text: "비밀번호로 잠그기" });
     const lockBox = shell.createDiv({ cls: "lab-card" });
     lockBox.hide();
-    lockBox.createEl("p", { cls: "lab-note", text: "비밀번호를 잊으면 복구할 수 없어요. 비밀번호와 평문은 팀 서고에 저장되지 않아요." });
+    lockBox.createEl("p", { cls: "lab-note", text: "비밀번호를 잊으면 아무도 열 수 없어요." });
     const shared = this.passwordPair(lockBox, "비밀번호", "비밀번호 확인");
     const perNote = lockBox.createEl("label", { cls: "lab-check" });
     const perToggle = perNote.createEl("input", { attr: { type: "checkbox" } });

@@ -1,6 +1,6 @@
 import { placeBody, stitchBody } from "../../packages/types/body";
 import type { ResearchNote } from "../../packages/types/research-note";
-import type { SealedChunk } from "../../packages/shared/lock";
+import { noteDocumentId, type SealedChunk } from "../../packages/shared/lock";
 import { LabsidianError } from "../errors";
 import type { HttpClient } from "../http/types";
 
@@ -16,14 +16,15 @@ export function toFirestoreFields(note: ResearchNote, chunkCount = 0): { fields:
     ["title", note.title],
     ["series", note.series],
     ["source", note.source],
-    ["source_id", note.source_id],
+    ["source_id", note.locked ? "" : note.source_id],
+    ["doc_id", note.doc_id],
     ["team_id", note.team_id],
     ["type", note.type],
     ["publisher", note.publisher],
     ["published", note.published],
-    ["url", note.url],
-    ["pdf_url", note.pdf_url],
-    ["query", note.query],
+    ["url", note.locked ? "" : note.url],
+    ["pdf_url", note.locked ? "" : note.pdf_url],
+    ["query", note.locked ? "" : note.query],
     ["collected", note.collected],
     ["converter", note.converter],
     ["summary_model", note.summary_model],
@@ -31,22 +32,24 @@ export function toFirestoreFields(note: ResearchNote, chunkCount = 0): { fields:
     ["body", note.locked || chunkCount > 0 ? "" : note.body],
     ["excerpt", note.excerpt],
     ["owner_email", note.owner_email],
+    ["display_name", note.display_name],
     ["owner_uid", note.owner_uid],
   ];
   const fields: Record<string, FsValue> = {};
   for (const [key, value] of strings) fields[key] = { stringValue: value };
-  fields.author = { arrayValue: { values: note.author.map((item) => ({ stringValue: item })) } };
+  fields.author = { arrayValue: { values: (note.locked ? [] : note.author).map((item) => ({ stringValue: item })) } };
   fields.keywords = { arrayValue: { values: (note.locked ? [] : note.keywords).map((item) => ({ stringValue: item })) } };
+  fields.tags = { arrayValue: { values: (note.locked ? [] : note.tags).map((item) => ({ stringValue: item })) } };
   fields.locked = { booleanValue: note.locked };
   fields.title_hidden = { booleanValue: note.title_hidden };
   fields.lock_salt = { stringValue: note.lock_salt };
   fields.lock_iterations = { integerValue: String(note.lock_iterations) };
   fields.lock_iv = { stringValue: note.lock_iv };
   fields.lock_ciphertext = { stringValue: note.lock_ciphertext };
-  fields.tags = { arrayValue: { values: note.tags.map((item) => ({ stringValue: item })) } };
   fields.convert_warnings = { integerValue: String(note.convert_warnings) };
   fields.chunk_count = { integerValue: String(chunkCount) };
-  fields.team_shared = { booleanValue: true };
+  fields.team_shared = { booleanValue: note.team_shared };
+  fields.briefing_public = { booleanValue: note.briefing_public };
   if (note.uploaded_at) fields.uploaded_at = { timestampValue: note.uploaded_at };
   return { fields };
 }
@@ -63,14 +66,16 @@ export function fromFirestoreDocument(doc: unknown): ResearchNote | null {
     if (!value || !("arrayValue" in value)) return [];
     return (value.arrayValue.values ?? []).map((item) => item.stringValue).filter(Boolean);
   };
+  const docId = str("doc_id");
   const sourceId = str("source_id");
-  if (!sourceId) return null;
+  if (!docId && !sourceId) return null;
   const warnings = fields.convert_warnings;
   return {
     title: str("title"),
     series: str("series"),
     source: str("source"),
     source_id: sourceId,
+    doc_id: docId,
     team_id: str("team_id"),
     type: str("type"),
     publisher: str("publisher"),
@@ -85,11 +90,13 @@ export function fromFirestoreDocument(doc: unknown): ResearchNote | null {
     convert_warnings: warnings && "integerValue" in warnings ? Number(warnings.integerValue) : 0,
     summary_model: str("summary_model"),
     team_shared: true,
+    briefing_public: Boolean(fields.briefing_public && "booleanValue" in fields.briefing_public && fields.briefing_public.booleanValue),
     tags: list("tags"),
     summary: str("summary"),
     body: str("body"),
     excerpt: str("excerpt"),
     owner_email: str("owner_email"),
+    display_name: str("display_name"),
     owner_uid: str("owner_uid"),
     uploaded_at: fields.uploaded_at && "timestampValue" in fields.uploaded_at ? fields.uploaded_at.timestampValue : "",
     locked: Boolean(fields.locked && "booleanValue" in fields.locked && fields.locked.booleanValue),
@@ -102,9 +109,9 @@ export function fromFirestoreDocument(doc: unknown): ResearchNote | null {
   };
 }
 
-export function documentId(sourceId: string): string {
-  const cleaned = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 700);
-  return cleaned || "note";
+export async function documentId(note: Pick<ResearchNote, "doc_id" | "team_id" | "owner_uid" | "source_id">): Promise<string> {
+  if (note.doc_id) return note.doc_id;
+  return noteDocumentId(note.team_id, note.owner_uid, note.source_id);
 }
 
 function collection(projectId: string): string {
@@ -121,7 +128,8 @@ export function chunkCountOf(doc: unknown): number {
 export async function upsertResearchNote(http: HttpClient, projectId: string, idToken: string, note: ResearchNote): Promise<void> {
   const placed = note.locked ? { inline: "", chunks: [] as string[] } : placeBody(note.body);
   const sealed: SealedChunk[] = note.locked ? note.locked_chunks : [];
-  const id = documentId(note.source_id);
+  const id = await documentId(note);
+  note = { ...note, doc_id: id };
   const payload = JSON.stringify(toFirestoreFields({ ...note, body: note.locked ? "" : placed.inline }, note.locked ? sealed.length : placed.chunks.length));
   const headers = { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" };
   const patch = await http.request({
@@ -174,20 +182,29 @@ export async function upsertResearchNote(http: HttpClient, projectId: string, id
       throw new LabsidianError(`본문 조각 ${index + 1}을 올리지 못했어요 (${written.status}). 내 볼트의 노트는 그대로예요.`);
     }
   }
-  for (let index = chunkTotal; index < chunkTotal + 8; index += 1) {
-    const removed = await http.request({
-      url: `${collection(projectId)}/${encodeURIComponent(id)}/chunks/${String(index).padStart(4, "0")}`,
-      method: "DELETE",
-      headers,
-    });
-    if (removed.status === 404) break;
+  const listed = await http.request({
+    url: `${collection(projectId)}/${encodeURIComponent(id)}/chunks?pageSize=200`,
+    headers,
+  });
+  if (listed.status < 400) {
+    const payload = JSON.parse(listed.text) as { documents?: { name?: string }[] };
+    for (const doc of payload.documents ?? []) {
+      const name = doc.name?.split("/").pop() ?? "";
+      const index = Number(name);
+      if (!Number.isInteger(index) || index < chunkTotal) continue;
+      await http.request({
+        url: `${collection(projectId)}/${encodeURIComponent(id)}/chunks/${name}`,
+        method: "DELETE",
+        headers,
+      });
+    }
   }
 }
 
 export async function hydrateBody(http: HttpClient, projectId: string, idToken: string, doc: unknown, note: ResearchNote, apiKey = ""): Promise<ResearchNote> {
   const count = chunkCountOf(doc);
   if (count <= 0) return note;
-  const chunkUrl = new URL(`${collection(projectId)}/${encodeURIComponent(documentId(note.source_id))}/chunks`);
+  const chunkUrl = new URL(`${collection(projectId)}/${encodeURIComponent(note.doc_id)}/chunks`);
   chunkUrl.searchParams.set("pageSize", "100");
   if (!idToken && apiKey) chunkUrl.searchParams.set("key", apiKey);
   const response = await http.request({
@@ -216,31 +233,29 @@ export async function hydrateBody(http: HttpClient, projectId: string, idToken: 
   return { ...note, body: stitchBody("", chunks.map((chunk) => ({ index: chunk.index, text: chunk.text }))) };
 }
 
-export async function listResearchNotes(http: HttpClient, projectId: string, idToken: string): Promise<ResearchNote[]> {
-  const notes: ResearchNote[] = [];
-  let pageToken = "";
-  for (let page = 0; page < 3; page += 1) {
-    const url = new URL(collection(projectId));
-    url.searchParams.set("pageSize", "100");
-    if (pageToken) url.searchParams.set("pageToken", pageToken);
-    const response = await http.request({
-      url: url.toString(),
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-    if (response.status >= 400) throw new LabsidianError(`팀 서고를 읽지 못했어요 (${response.status}). 내 볼트의 노트는 그대로예요.`);
-    const payload = JSON.parse(response.text) as { documents?: unknown[]; nextPageToken?: string };
-    for (const doc of payload.documents ?? []) {
-      const note = fromFirestoreDocument(doc);
-      if (note) notes.push(note);
-    }
-    if (!payload.nextPageToken) break;
-    pageToken = payload.nextPageToken;
-  }
-  return notes;
+export async function listResearchNotes(http: HttpClient, projectId: string, idToken: string, teamId: string, ownerUid = ""): Promise<ResearchNote[]> {
+  const where = ownerUid
+    ? { fieldFilter: { field: { fieldPath: "owner_uid" }, op: "EQUAL", value: { stringValue: ownerUid } } }
+    : { fieldFilter: { field: { fieldPath: "team_id" }, op: "EQUAL", value: { stringValue: teamId } } };
+  const response = await http.request({
+    url: `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery`,
+    method: "POST",
+    headers: { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: "research_notes" }],
+        where,
+        limit: 100,
+      },
+    }),
+  });
+  if (response.status >= 400) throw new LabsidianError(`팀 서고를 읽지 못했어요 (${response.status}). 내 볼트의 노트는 그대로예요.`);
+  const payload = JSON.parse(response.text) as { document?: unknown }[];
+  return payload.map((row) => fromFirestoreDocument(row.document)).filter((note): note is ResearchNote => note !== null);
 }
 
-export async function getResearchNote(http: HttpClient, projectId: string, idToken: string, sourceId: string, apiKey = ""): Promise<ResearchNote | null> {
-  const url = new URL(`${collection(projectId)}/${encodeURIComponent(documentId(sourceId))}`);
+export async function getResearchNote(http: HttpClient, projectId: string, idToken: string, docId: string, apiKey = ""): Promise<ResearchNote | null> {
+  const url = new URL(`${collection(projectId)}/${encodeURIComponent(docId)}`);
   if (!idToken && apiKey) url.searchParams.set("key", apiKey);
   const response = await http.request({
     url: url.toString(),

@@ -9,12 +9,31 @@ const summary = "평문요약-핵심만-골라요";
 const body = "평문본문-한글과 이모지 🔒📄 가 그대로 남아요.";
 const keyword = "평문키워드";
 
+function sealInput(hideTitle = false) {
+  return {
+    title,
+    summary,
+    keywords: [keyword],
+    body,
+    password,
+    hideTitle,
+    docId: "doc-lock-1",
+    sourceId: "kofic-lock-1",
+    url: "https://example.test/report",
+    pdfUrl: "https://example.test/file.pdf",
+    author: ["김연구"],
+    query: "영화",
+    tags: ["정책"],
+  };
+}
+
 function note(extra: Partial<ResearchNote> = {}): ResearchNote {
   return {
     title,
     series: "보고서",
     source: "kofic",
     source_id: "kofic-lock-1",
+    doc_id: "",
     team_id: "alpha",
     type: "report",
     publisher: "영화진흥위원회",
@@ -29,6 +48,8 @@ function note(extra: Partial<ResearchNote> = {}): ResearchNote {
     convert_warnings: 0,
     summary_model: "gemini",
     team_shared: true,
+    briefing_public: false,
+    display_name: "표시이름",
     tags: [],
     summary,
     body,
@@ -49,25 +70,28 @@ function note(extra: Partial<ResearchNote> = {}): ResearchNote {
 
 describe("note lock", () => {
   it("decrypts back to the same text, including Korean and emoji", async () => {
-    const sealed = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
+    const sealed = await sealNote(sealInput());
     const opened = await openSealed(sealed, password);
-    expect(opened).toEqual({ title, summary, keywords: [keyword], body });
+    expect(opened.title).toBe(title);
+    expect(opened.body).toBe(body);
+    expect(opened.source_id).toBe("kofic-lock-1");
+    expect(opened.url).toBe("https://example.test/report");
   }, 30_000);
 
   it("rejects an iteration count outside the allowed range before deriving a key", async () => {
-    const sealed = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
+    const sealed = await sealNote(sealInput());
     await expect(openSealed({ ...sealed, iterations: MAX_PBKDF2_ITERATIONS + 1 }, password)).rejects.toThrow("잠금 설정을 열 수 없어요.");
     await expect(openSealed({ ...sealed, iterations: 1 }, password)).rejects.toThrow("잠금 설정을 열 수 없어요.");
     await expect(openSealed({ ...sealed, iterations: Number.NaN }, password)).rejects.toThrow("잠금 설정을 열 수 없어요.");
   }, 10_000);
 
   it("rejects a wrong password", async () => {
-    const sealed = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
+    const sealed = await sealNote(sealInput());
     await expect(openSealed(sealed, "틀린-비밀번호")).rejects.toThrow("비밀번호가 맞지 않아요");
   }, 30_000);
 
   it("rejects a ciphertext changed by one byte", async () => {
-    const sealed = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
+    const sealed = await sealNote(sealInput());
     const bytes = fromBase64(sealed.ciphertext);
     bytes[0] = (bytes[0] ?? 0) ^ 0xff;
     const tampered = { ...sealed, ciphertext: toBase64(bytes) };
@@ -75,8 +99,8 @@ describe("note lock", () => {
   }, 30_000);
 
   it("uses a new IV and ciphertext every time", async () => {
-    const first = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
-    const second = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
+    const first = await sealNote(sealInput());
+    const second = await sealNote(sealInput());
     expect(first.iv).not.toBe(second.iv);
     expect(first.ciphertext).not.toBe(second.ciphertext);
     expect(first.salt).not.toBe(second.salt);
@@ -90,7 +114,7 @@ describe("note lock", () => {
     expect(locked.keywords).toEqual([]);
     expect(locked.excerpt).toBe("");
     const stored = JSON.stringify({ ...locked, ...toFirestoreFields(locked, locked.locked_chunks.length) });
-    for (const secret of [title, summary, body, keyword]) {
+    for (const secret of [title, summary, body, keyword, "kofic-lock-1", "https://example.test/report", "김연구"]) {
       expect(stored.includes(secret)).toBe(false);
     }
     const opened = await unlockResearchNote(locked, password);

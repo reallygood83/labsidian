@@ -4,6 +4,7 @@ export interface ResearchNote {
   series: string;
   source: string;
   source_id: string;
+  doc_id: string;
   team_id: string;
   type: string;
   publisher: string;
@@ -18,12 +19,14 @@ export interface ResearchNote {
   convert_warnings: number;
   summary_model: string;
   team_shared: boolean;
+  briefing_public: boolean;
   tags: string[];
   summary: string;
   /** Full note body. Large texts are split across research_notes/{id}/chunks. */
   body: string;
   excerpt: string;
   owner_email: string;
+  display_name: string;
   owner_uid: string;
   uploaded_at: string;
   locked: boolean;
