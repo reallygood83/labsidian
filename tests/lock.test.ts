@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fromBase64, HIDDEN_TITLE, lockResearchNote, openSealed, sealNote, toBase64, unlockResearchNote } from "../packages/shared/lock";
+import { fromBase64, HIDDEN_TITLE, lockResearchNote, MAX_PBKDF2_ITERATIONS, openSealed, sealNote, toBase64, unlockResearchNote } from "../packages/shared/lock";
 import { toFirestoreFields } from "../src/team/firestore";
 import type { ResearchNote } from "../packages/types/research-note";
 
@@ -53,6 +53,13 @@ describe("note lock", () => {
     const opened = await openSealed(sealed, password);
     expect(opened).toEqual({ title, summary, keywords: [keyword], body });
   }, 30_000);
+
+  it("rejects an iteration count outside the allowed range before deriving a key", async () => {
+    const sealed = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });
+    await expect(openSealed({ ...sealed, iterations: MAX_PBKDF2_ITERATIONS + 1 }, password)).rejects.toThrow("잠금 설정을 열 수 없어요.");
+    await expect(openSealed({ ...sealed, iterations: 1 }, password)).rejects.toThrow("잠금 설정을 열 수 없어요.");
+    await expect(openSealed({ ...sealed, iterations: Number.NaN }, password)).rejects.toThrow("잠금 설정을 열 수 없어요.");
+  }, 10_000);
 
   it("rejects a wrong password", async () => {
     const sealed = await sealNote({ title, summary, keywords: [keyword], body, password, hideTitle: false });

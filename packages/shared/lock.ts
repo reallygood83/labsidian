@@ -3,6 +3,7 @@ import type { ResearchNote } from "../types/research-note";
 
 /** PBKDF2-SHA256 iterations. OWASP 2023 lower bound for SHA-256 is 600k; we stay at the requested floor. */
 export const PBKDF2_ITERATIONS = 310_000;
+export const MAX_PBKDF2_ITERATIONS = PBKDF2_ITERATIONS * 2;
 export const SALT_BYTES = 16;
 export const IV_BYTES = 12;
 export const HIDDEN_TITLE = "잠긴 자료";
@@ -80,7 +81,9 @@ export async function sealNote(input: {
 }
 
 export async function openSealed(sealed: SealedNote, password: string): Promise<OpenSecrets> {
-  if (sealed.iterations < PBKDF2_ITERATIONS) throw new LockError("비밀번호가 맞지 않아요");
+  if (!Number.isInteger(sealed.iterations) || sealed.iterations < PBKDF2_ITERATIONS || sealed.iterations > MAX_PBKDF2_ITERATIONS) {
+    throw new LockError("잠금 설정을 열 수 없어요.");
+  }
   const key = await deriveKey(password, fromBase64(sealed.salt), sealed.iterations);
   const blob = JSON.parse(await decryptText(key, sealed.iv, sealed.ciphertext)) as SecretBlob;
   let body = blob.body ?? "";
