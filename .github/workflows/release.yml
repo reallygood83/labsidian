@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: mkdir -p dist && zip -j dist/labsidian-${GITHUB_REF_NAME}.zip main.js manifest.json styles.css
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/labsidian-${GITHUB_REF_NAME}.zip

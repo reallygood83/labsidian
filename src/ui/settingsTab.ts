@@ -1,0 +1,368 @@
+import { Notice, PluginSettingTab, Setting, type App, type Plugin } from "obsidian";
+import type { LabsidianHost } from "../host";
+import { t } from "../i18n";
+import { SECRET } from "../secrets";
+import type { AiProvider, FieldToggles } from "../settings";
+import { SOURCES } from "../sources/registry";
+import type { SourceId } from "../sources/types";
+import { FIRESTORE_RULES } from "../../packages/shared/rulesText";
+import { setupSteps } from "../../packages/shared/team";
+import { parseFirebaseWebConfig, signInWithGoogleIdToken, signUpWithPassword } from "../team/auth";
+import { createSecretField, createSettingGroup } from "../types/obsidian";
+
+const FIELD_LABELS: { key: keyof FieldToggles; label: string }[] = [
+  { key: "series", label: "series" },
+  { key: "type", label: "type" },
+  { key: "publisher", label: "publisher" },
+  { key: "author", label: "author" },
+  { key: "published", label: "published" },
+  { key: "pdfUrl", label: "pdf_url" },
+  { key: "query", label: "query" },
+  { key: "keywords", label: "keywords" },
+  { key: "converter", label: "converter" },
+  { key: "convertWarnings", label: "convert_warnings" },
+  { key: "summaryModel", label: "summary_model" },
+  { key: "teamShared", label: "team_shared" },
+  { key: "tags", label: "tags" },
+];
+
+export class LabsidianSettingTab extends PluginSettingTab {
+  private tab: "sources" | "notes" | "ai" | "team" | "about" = "sources";
+
+  constructor(app: App, private readonly plugin: LabsidianHost & Plugin) {
+    super(app, plugin);
+  }
+
+  display(): void {
+    const root = this.containerEl;
+    root.empty();
+    root.addClass("labsidian");
+    root.addClass("lab-settings");
+    const tabs = root.createDiv({ cls: "lab-tabs" });
+    for (const id of ["sources", "notes", "ai", "team", "about"] as const) {
+      const button = tabs.createEl("button", { cls: `lab-tab${this.tab === id ? " is-on" : ""}`, text: t(`settings.${id}`) });
+      button.addEventListener("click", () => {
+        this.tab = id;
+        this.display();
+      });
+    }
+    if (this.tab === "sources") this.sources(root);
+    if (this.tab === "notes") this.notes(root);
+    if (this.tab === "ai") this.ai(root);
+    if (this.tab === "team") this.team(root);
+    if (this.tab === "about") this.about(root);
+  }
+
+  private sources(root: HTMLElement): void {
+    const grid = root.createDiv({ cls: "lab-sources" });
+    for (const source of SOURCES) {
+      const card = grid.createDiv({ cls: "lab-card lab-source-card" });
+      const head = card.createDiv({ cls: "lab-row" });
+      head.createDiv({ cls: "lab-logo", attr: { "data-source": source.id }, text: short(source.id) });
+      head.createDiv({ cls: "lab-title", text: source.label });
+      const needsKey = source.requiresKey;
+      const secretId = source.id === "kci" ? SECRET.kci : source.id === "riss" ? SECRET.riss : source.id === "openalex" ? SECRET.openalex : "";
+      const hasKey = secretId ? this.plugin.secrets.has(secretId) : true;
+      new Setting(card).setName("사용").addToggle((toggle) => {
+        toggle.setValue(Boolean(this.plugin.settings.sources[source.id]) && (!needsKey || hasKey));
+        toggle.setDisabled(needsKey && !hasKey);
+        toggle.onChange(async (value) => {
+          this.plugin.settings.sources[source.id] = value;
+          await this.plugin.saveSettings();
+        });
+      });
+      card.createEl("p", { cls: "lab-note", text: source.blurb });
+      if (secretId) this.secretRow(card, secretId, source.keyHint);
+      const status = card.createDiv({ cls: "lab-statusline" });
+      const state = !hasKey && needsKey ? t("search.needKey") : source.id === "openalex" && !hasKey ? t("settings.sharedQuota") : t("settings.connected");
+      status.createSpan({ cls: "lab-saved-dot" });
+      status.createSpan({ text: state });
+      const test = card.createEl("button", { cls: "lab-btn", text: t("settings.test") });
+      test.addEventListener("click", () => {
+        void this.plugin.testSource(source.id).then((message) => new Notice(message));
+      });
+    }
+  }
+
+  private secretRow(card: HTMLElement, id: string, hint: string): void {
+    const host = card.createDiv();
+    const field = createSecretField(this.app, host);
+    if (field) {
+      const current = this.plugin.secrets.has(id);
+      if (current) field.setValue("••••");
+      field.onChange((value) => {
+        void this.storeSecret(id, value ?? "");
+      });
+    }
+    if (hint) card.createEl("p", { cls: "lab-note", text: hint });
+    const clear = card.createEl("button", { cls: "lab-btn", text: t("settings.clearKey") });
+    clear.addEventListener("click", () => {
+      void this.storeSecret(id, "");
+    });
+  }
+
+  private async storeSecret(id: string, value: string): Promise<void> {
+    if (!value) {
+      await this.plugin.secrets.remove(id);
+      if (id === SECRET.kci) this.plugin.settings.sources.kci = false;
+      if (id === SECRET.riss) this.plugin.settings.sources.riss = false;
+    } else if (value !== "••••") {
+      await this.plugin.secrets.set(id, value);
+    }
+    await this.plugin.saveSettings();
+    this.display();
+  }
+
+  private notes(root: HTMLElement): void {
+    const group = this.group(root, t("settings.notes"));
+    new Setting(group).setName(t("settings.folder")).addText((text) => {
+      text.setValue(this.plugin.settings.noteFolder).onChange(async (value) => {
+        this.plugin.settings.noteFolder = value.trim() || "연구자료";
+        await this.plugin.saveSettings();
+      });
+    });
+    new Setting(group).setName(t("settings.filename")).setDesc(t("settings.filenameHint")).addText((text) => {
+      text.setValue(this.plugin.settings.filenameTemplate).onChange(async (value) => {
+        this.plugin.settings.filenameTemplate = value.trim() || "{{series}} {{title}}";
+        await this.plugin.saveSettings();
+      });
+    });
+    new Setting(group).setName(t("settings.fields")).setHeading();
+    for (const field of FIELD_LABELS) {
+      new Setting(group).setName(field.label).addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.fields[field.key]).onChange(async (value) => {
+          this.plugin.settings.fields[field.key] = value;
+          await this.plugin.saveSettings();
+        });
+      });
+    }
+  }
+
+  private ai(root: HTMLElement): void {
+    const group = this.group(root, t("settings.ai"));
+    new Setting(group).setName(t("settings.provider")).addDropdown((dropdown) => {
+      dropdown.addOption("gemini", "Gemini");
+      dropdown.addOption("openai", "OpenAI");
+      dropdown.addOption("anthropic", "Anthropic");
+      dropdown.setValue(this.plugin.settings.aiProvider).onChange(async (value) => {
+        this.plugin.settings.aiProvider = value as AiProvider;
+        await this.plugin.saveSettings();
+        this.display();
+      });
+    });
+    const secretId = SECRET[this.plugin.settings.aiProvider];
+    this.secretRow(group, secretId, "키는 키체인에만 저장해요.");
+    new Setting(group).setName(t("settings.model")).addText((text) => {
+      text.setValue(this.plugin.settings.aiModels[this.plugin.settings.aiProvider]).onChange(async (value) => {
+        this.plugin.settings.aiModels[this.plugin.settings.aiProvider] = value.trim();
+        await this.plugin.saveSettings();
+      });
+    });
+    new Setting(group).setName(t("settings.range")).addDropdown((dropdown) => {
+      dropdown.addOption("excerpt", t("settings.rangeExcerpt"));
+      dropdown.addOption("full", t("settings.rangeFull"));
+      dropdown.setValue(this.plugin.settings.sendFullText ? "full" : "excerpt").onChange(async (value) => {
+        this.plugin.settings.sendFullText = value === "full";
+        await this.plugin.saveSettings();
+      });
+    });
+    new Setting(group).setName(t("settings.daily")).addText((text) => {
+      text.setValue(String(this.plugin.settings.dailySummaryLimit)).onChange(async (value) => {
+        const count = Number(value);
+        if (Number.isFinite(count)) this.plugin.settings.dailySummaryLimit = Math.max(0, Math.floor(count));
+        await this.plugin.saveSettings();
+      });
+    });
+    new Setting(group).setName("AI").addToggle((toggle) => {
+      toggle.setValue(this.plugin.settings.aiEnabled).onChange(async (value) => {
+        this.plugin.settings.aiEnabled = value;
+        await this.plugin.saveSettings();
+      });
+    });
+  }
+
+  private team(root: HTMLElement): void {
+    const steps = root.createDiv({ cls: "lab-card" });
+    steps.createEl("h3", { text: "팀 서고 만들기" });
+    setupSteps(this.plugin.settings.firebaseProjectId).forEach((step, index) => {
+      const row = steps.createDiv({ cls: "lab-row" });
+      row.createSpan({ text: `${index + 1}. ${step.title}` });
+      row.createSpan({ cls: "lab-note", text: step.detail });
+      const open = row.createEl("button", { cls: "lab-btn", text: "콘솔 열기" });
+      open.addEventListener("click", () => window.open(step.href, "_blank"));
+    });
+    const copyRules = steps.createEl("button", { cls: "lab-btn", text: "규칙 복사" });
+    copyRules.addEventListener("click", () => {
+      void navigator.clipboard.writeText(FIRESTORE_RULES).then(
+        () => new Notice("규칙을 복사했어요. Firestore 규칙 편집기에 붙여 넣고 게시해요."),
+        () => new Notice("복사하지 못했어요. 규칙 편집기에서 firestore.rules 내용을 붙여 넣어 주세요."),
+      );
+    });
+
+    const group = this.group(root, t("settings.team"));
+    if (this.plugin.settings.firebaseProjectId) {
+      group.createEl("p", { cls: "lab-note", text: "웹 설정이 저장되어 있어요. JSON은 다시 보여 주지 않아요." });
+    }
+    const box = group.createEl("textarea", { cls: "lab-search-input", attr: { rows: "4" } });
+    box.placeholder = '{"apiKey":"","projectId":""}';
+    const check = group.createEl("button", { cls: "lab-btn", text: t("settings.firebaseCheck") });
+    check.addEventListener("click", async () => {
+      try {
+        const parsed = parseFirebaseWebConfig(box.value);
+        this.plugin.settings.firebaseProjectId = parsed.projectId;
+        this.plugin.settings.firebaseApiKey = parsed.apiKey;
+        this.plugin.settings.firebaseEnabled = true;
+        await this.plugin.saveSettings();
+        new Notice("Firebase 웹 설정을 확인했어요.");
+      } catch (error) {
+        new Notice(error instanceof Error ? error.message : "설정을 확인하지 못했어요.");
+      }
+    });
+    new Setting(group).setName("이메일").addText((text) => {
+      text.setValue(this.plugin.settings.firebaseEmail).onChange(async (value) => {
+        this.plugin.settings.firebaseEmail = value.trim();
+        await this.plugin.saveSettings();
+      });
+    });
+    let password = "";
+    new Setting(group).setName("비밀번호").addText((text) => {
+      text.inputEl.type = "password";
+      text.onChange((value) => {
+        password = value;
+      });
+    });
+    const login = group.createEl("button", { cls: "lab-btn is-primary", text: t("settings.login") });
+    login.addEventListener("click", () => {
+      void this.plugin.login(password).then((message) => new Notice(message));
+    });
+    const signup = group.createEl("button", { cls: "lab-btn", text: t("settings.signup") });
+    signup.addEventListener("click", async () => {
+      try {
+        const session = await signUpWithPassword(this.plugin.http, this.plugin.settings.firebaseApiKey, this.plugin.settings.firebaseEmail, password);
+        await this.plugin.secrets.set(SECRET.firebaseRefresh, session.refreshToken);
+        new Notice(t("settings.loggedIn", { email: session.email }));
+      } catch (error) {
+        new Notice(error instanceof Error ? `${error.message} ${t("upload.vaultSafe")}` : t("upload.vaultSafe"));
+      }
+    });
+    let google = "";
+    new Setting(group).setName(t("settings.google")).addText((text) => text.onChange((value) => {
+      google = value.trim();
+    }));
+    const googleButton = group.createEl("button", { cls: "lab-btn", text: t("settings.login") });
+    googleButton.addEventListener("click", async () => {
+      try {
+        const session = await signInWithGoogleIdToken(this.plugin.http, this.plugin.settings.firebaseApiKey, google);
+        await this.plugin.secrets.set(SECRET.firebaseRefresh, session.refreshToken);
+        new Notice(t("settings.loggedIn", { email: session.email }));
+      } catch (error) {
+        new Notice(error instanceof Error ? `${error.message} ${t("upload.vaultSafe")}` : t("upload.vaultSafe"));
+      }
+    });
+    const logged = this.plugin.secrets.has(SECRET.firebaseRefresh);
+    group.createEl("p", {
+      cls: "lab-note",
+      text: logged ? t("settings.loggedIn", { email: this.plugin.settings.firebaseEmail || "팀원" }) : t("settings.loggedOut"),
+    });
+    if (logged && this.plugin.settings.firebaseProjectId && this.plugin.settings.firebaseApiKey) {
+      this.inviteTools(group);
+    }
+    new Setting(group).setName(t("settings.briefingUrl")).addText((text) => {
+      text.setValue(this.plugin.settings.briefingUrl).onChange(async (value) => {
+        this.plugin.settings.briefingUrl = value.trim();
+        await this.plugin.saveSettings();
+      });
+    });
+    group.createEl("p", {
+      cls: "lab-note",
+      text: this.plugin.settings.lastSyncAt
+        ? `${t("settings.sync")} ${this.plugin.settings.lastSyncAt} · ${this.plugin.settings.lastSyncCount}`
+        : t("settings.syncEmpty"),
+    });
+  }
+
+  private inviteTools(group: HTMLElement): void {
+    const card = group.createDiv({ cls: "lab-card" });
+    card.createEl("p", { text: "팀코드를 정하면 초대 링크가 생겨요. 코드를 바꾸면 이전 링크는 멈춰요." });
+    const codeInput = card.createEl("input", { cls: "lab-search-input", attr: { placeholder: "비워 두면 코드를 만들어요" } });
+    const make = card.createEl("button", { cls: "lab-btn is-primary", text: "초대 링크 만들기" });
+    const result = card.createDiv({ cls: "lab-note" });
+    make.addEventListener("click", () => {
+      void this.plugin.createInvite(codeInput.value).then((invite) => {
+        codeInput.value = "";
+        result.empty();
+        result.createEl("p", { text: `팀코드 ${invite.code}` });
+        result.createEl("p", { text: invite.obsidian });
+        if (invite.web) result.createEl("p", { text: invite.web });
+        const copy = result.createEl("button", { cls: "lab-btn", text: "초대 링크 복사" });
+        copy.addEventListener("click", () => {
+          void navigator.clipboard.writeText(invite.web || invite.obsidian);
+          new Notice("초대 링크를 복사했어요.");
+        });
+      }).catch((error: unknown) => {
+        new Notice(error instanceof Error ? error.message : "초대 링크를 만들지 못했어요.");
+      });
+    });
+    const deploy = card.createEl("button", { cls: "lab-btn", text: "브리핑 배포용 값 복사" });
+    deploy.addEventListener("click", () => {
+      void navigator.clipboard.writeText(this.plugin.deployConfig());
+      new Notice("배포용 값을 복사했어요. Vercel의 NEXT_PUBLIC_LABSIDIAN_CONFIG에 붙여 넣어요.");
+    });
+    if (!this.plugin.settings.teamId) return;
+    const members = card.createDiv();
+    const refresh = card.createEl("button", { cls: "lab-btn", text: "멤버 새로고침" });
+    const paint = async () => {
+      members.empty();
+      const people = await this.plugin.listTeamMembers();
+      if (!people.length) {
+        members.createEl("p", { cls: "lab-note", text: "아직 다른 멤버가 없어요." });
+        return;
+      }
+      for (const person of people) {
+        const row = members.createDiv({ cls: "lab-row" });
+        row.createSpan({ text: person.email || person.uid });
+        const remove = row.createEl("button", { cls: "lab-btn", text: "멤버 빼기" });
+        remove.addEventListener("click", () => {
+          void this.plugin.removeTeamMember(person.uid).then(() => paint());
+        });
+      }
+    };
+    refresh.addEventListener("click", () => void paint());
+    void paint();
+  }
+
+  private about(root: HTMLElement): void {
+    const group = this.group(root, t("settings.about"));
+    group.createEl("p", { cls: "lab-note", text: t("settings.aboutBody") });
+    group.createEl("p", { cls: "lab-note", text: "kordoc 4.24.80. 브리핑은 로그인 없이 누구나 볼 수 있어요." });
+  }
+
+  private group(root: HTMLElement, heading: string): HTMLElement {
+    const made = createSettingGroup(root);
+    if (made) {
+      made.setHeading(heading);
+      return made.listEl;
+    }
+    new Setting(root).setName(heading).setHeading();
+    return root;
+  }
+}
+
+function short(id: SourceId): string {
+  switch (id) {
+    case "kofic":
+      return "영";
+    case "kocca":
+      return "콘";
+    case "openalex":
+      return "OA";
+    case "kci":
+      return "K";
+    case "riss":
+      return "R";
+    default: {
+      const exhaustive: never = id;
+      return exhaustive;
+    }
+  }
+}

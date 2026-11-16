@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function teamDoc(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId));
+    }
+
+    function isOwner(teamId) {
+      return signedIn() && teamDoc(teamId).data.ownerUid == request.auth.uid;
+    }
+
+    function isMember(teamId) {
+      return signedIn() && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+
+    // 브리핑은 로그인 없이 읽습니다. 쓰기는 팀코드를 맞추고 가입한 멤버만 합니다.
+    match /research_notes/{noteId} {
+      allow read: if true;
+
+      allow create: if isMember(request.resource.data.team_id)
+        && request.resource.data.owner_uid == request.auth.uid;
+
+      allow update, delete: if isMember(resource.data.team_id)
+        && resource.data.owner_uid == request.auth.uid
+        && request.resource.data.owner_uid == resource.data.owner_uid
+        && request.resource.data.team_id == resource.data.team_id;
+
+      match /chunks/{chunkId} {
+        allow read: if true;
+        allow create, update, delete: if signedIn()
+          && get(/databases/$(database)/documents/research_notes/$(noteId)).data.owner_uid == request.auth.uid
+          && isMember(get(/databases/$(database)/documents/research_notes/$(noteId)).data.team_id);
+      }
+    }
+
+    match /teams/{teamId} {
+      allow get: if isOwner(teamId) || isMember(teamId);
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.codeHash is string
+        && request.resource.data.codeHash.size() == 64;
+      allow update: if isOwner(teamId)
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isOwner(teamId);
+
+      match /members/{userId} {
+        allow get: if signedIn() && (isOwner(teamId) || request.auth.uid == userId);
+        allow list: if isOwner(teamId);
+        allow create: if signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.codeHash == teamDoc(teamId).data.codeHash;
+        allow update: if false;
+        allow delete: if isOwner(teamId);
+      }
+    }
+  }
+}

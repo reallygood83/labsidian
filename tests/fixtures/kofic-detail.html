@@ -1,0 +1,4196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+
+
+
+<!--
+*
+* @프로그램명 : 정책연구 상세
+* @파일명 : findPolicyDetail.jsp
+* @작성일 : 2012.08.22
+* @작성자 : 김재광
+*
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<link rel="SHORTCUT ICON" href="/kofic/comm/images/icon/kofic.ico" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!-- <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/> -->
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
+<meta name="format-detection" content="telephone=no, address=no, email=no" />
+<title>영화진흥위원회 홈페이지입니다.</title>
+
+<!-- 공통 js/css -->
+
+
+
+
+
+
+
+
+
+
+
+<!--
+*
+* @프로그램명 : 공통 import jsp.
+* @파일명 : common.jsp
+* @작성일 : 2018.10.04
+* @작성자 : 황동용
+*
+-->
+
+<link rel="shortcut icon" type="image/x-icon" href="/kofic/comm/img/common/favicon.ico"/>
+<link rel="stylesheet" href="/kofic/comm/css/2018/style.css" type="text/css" />
+<link rel="stylesheet" href="/kofic/comm/css/2018/layout.css" type="text/css" />
+<link rel="stylesheet" href="/kofic/comm/css/2018/contents.css" type="text/css" />
+<link rel="stylesheet" href="/kofic/comm/css/2018/board.css" type="text/css" />
+<link rel="stylesheet" href="/kofic/comm/css/2018/ccm.css" type="text/css" />
+<link rel="stylesheet" type="text/css" href="/kofic/comm/css/custom-theme/jquery-ui-1.9.1.custom.css"/>
+<link rel="stylesheet" href="/kofic/comm/js/2018/slide_js/swiper.css"/>
+<link rel="stylesheet" href="/kofic/comm/font/pretendard.css" type="text/css" />
+
+
+<script type="text/javascript" src="/kofic/comm/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/jquery-ui-1.9.1.custom.min.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/jquery.ui.datepicker-ko.js"></script> 
+<!-- <script type="text/javascript" src="/kofic/comm/js/jquery-ui-timepicker-addon.js"></script>0730 이유진 
+<script type="text/javascript" src="/kofic/comm/js/jquery.datetimepicker.min.js"></script>
+<link rel="stylesheet" href="/kofic/comm/css/jquery.datetimepicker.min.css" type="text/css" />
+-->
+
+
+<script type="text/javascript" src="/kofic/comm/js/jquery.metadata.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/json2.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/jquery.maskedinput.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/jquery.autoNumeric.min.js"></script>
+
+<script type="text/javascript" src="/kofic/comm/js/common_prototype.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/common_library.js"></script>
+<script type="text/javascript" src="/kofic/comm/js/common.js"></script>
+
+
+
+<script async src="/kofic/comm/js/gtag.js?id=UA-127072686-1"></script>
+
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- <script async src="/kobis/web/comm/commjs/gtag.js?id=UA-127072686-1"></script> -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-127072686-1');
+</script>
+
+<!-- script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script-->
+<script type="text/javascript" src="/kofic/comm/js/2018/common.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>
+<script type="text/javascript">
+    WebFont.load({
+        custom: {
+            families: ['Noto Sans KR']
+        },
+        google:{
+        	families: ['Nanum Gothic', 'Gowun Batang']
+        }
+    
+    });
+</script>
+
+<!--[if lt IE 9]>
+<script type="text/javascript" src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<script type="text/javascript" src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+<![endif]-->
+
+<!--모바일_슬라이드메뉴-->
+<link rel="stylesheet" href="/kofic/comm/js/2018/mobile_menu/slidebars.css" />
+<script type="text/javascript" src="/kofic/comm/js/2018/mobile_menu/slidebars.js"></script>
+<script type="text/javascript">
+    (function($) {
+        $(document).ready(function() {
+            $.slidebars();
+        });
+    }) (jQuery);
+</script>
+
+
+<!-- AceCounter Log Gathering Script V.72.2012122701 -->
+<script type="text/javascript">
+//<![CDATA[
+	// 로그인 사용자에게만 세션 타임아웃 연장 스크립트 작동
+
+
+<!-- *) 공통 분석스크립트  -->
+<!-- AceCounter Mobile WebSite Gathering Script V.3.1.20130424 -->
+/*if(typeof _GUL == 'undefined'){
+	var _GUL = 'gtt14.acecounter.com';
+	var _GPT='8080';
+	var _AIMG = new Image();
+	var _bn = navigator.appName;
+	var _PR = location.protocol == "https:" ? "https://"+_GUL : "http://"+_GUL+":"+_GPT;
+
+	if( _bn.indexOf("Netscape") > -1 || _bn == "Mozilla") {
+		setTimeout("_AIMG.src = _PR+'/?cookie';", 1);
+	} else {
+		_AIMG.src = _PR+'/?cookie';
+	}
+
+	document.writeln("<scr"+"ipt language='javascript' src='/kofic/comm/js/acecounter_V70.js'></scr"+"ipt>");
+}*/
+//]]>
+// AceCounter Log Gathering Script V.8.0.2019080601 //20220721 버전변경
+	var _AceGID=(function(){var Inf=['gtt14.acecounter.com','8080','AB2A31560720873','AW','0','NaPm,Ncisy','ALL','0']; var _CI=(!_AceGID)?[]:_AceGID.val;var _N=0;var _T=new Image(0,0);if(_CI.join('.').indexOf(Inf[3])<0){ _T.src ="https://"+Inf[0]+'/?cookie'; _CI.push(Inf);  _N=_CI.length; } return {o: _N,val:_CI}; })();
+	var _AceCounter=(function(){var G=_AceGID;var _sc=document.createElement('script');var _sm=document.getElementsByTagName('script')[0];if(G.o!=0){var _A=G.val[G.o-1];var _G=(_A[0]).substr(0,_A[0].indexOf('.'));var _C=(_A[7]!='0')?(_A[2]):_A[3];var _U=(_A[5]).replace(/\,/g,'_');_sc.src='https:'+'//cr.acecounter.com/Web/AceCounter_'+_C+'.js?gc='+_A[2]+'&py='+_A[4]+'&gd='+_G+'&gp='+_A[1]+'&up='+_U+'&rd='+(new Date().getTime());_sm.parentNode.insertBefore(_sc,_sm);return _sc.src;}})();
+</script>
+
+<!-- AceCounter Log Gathering Script End -->
+
+<!-- This script is for AceCounter START 2015 09 09  박지문 -->
+<!-- 문화정보원 막음 2016/07/26
+<HTML>
+<HEAD>
+<TITLE>www.kofic.or.kr - 영화진흥위원회 대표 홈페이지 TAG TEST </TITLE>
+</HEAD>
+<BODY>
+
+<script type="text/javascript">
+var _ag   = 0 ;         // 로그인사용자 나이
+var _id   = '';    		// 로그인사용자 아이디
+var _mr   = '';        	// 로그인사용자 결혼여부 ('single' , 'married' )
+var _gd   = '';         // 로그인사용자 성별 ('man' , 'woman')
+var _skey = '' ;        // 내부검색어
+
+var _jn = '' ;          //  가입탈퇴 ( 'join','withdraw' )
+var _jid = '' ;			// 가입시입력한 ID
+
+var _ud1 = '' ;			// 사용자 정의변수 1 ( 1 ~ 10 정수값)
+var _ud2 = '' ;			// 사용자 정의변수 2 ( 1 ~ 10 정수값)
+var _ud3 = '' ;			// 사용자 정의변수 3 ( 1 ~ 10 정수값)
+</script>
+
+<script type="text/javascript">
+//분석로그 수집 : 고정
+var _BT_SITE = "log.kcisa.kr";
+
+// 로그인사용자에 대한 정보. 로그인되었을 경우 첨부
+
+
+
+
+var _BT_LOGINSEG = "";
+
+
+//DEBUG 용도. on 으로 되어 있으면 script 실행결과가 alert 으로 나옴
+var _BT_DEBUG_ = "off";
+
+document.write("<sc" + "ript type='text/java" + "scr" + "ipt' src='"
+			+ ( document.location.protocol == "https:" ? "https://" : "http://" )
+			+ _BT_SITE +  "/tag/WebNibbler_kofic_or_kr.js" +  "'>");
+document.write("</sc" + "ript>");
+</script>
+
+<noscript>
+	<img src="http://log.kcisa.kr/tag/tag.jsp?site_cd=www.kofic.or.kr" width="0" height="0" border="0" alt=""/>
+	<img src='http://gtb18.acecounter.com:8080/?uid=BH3A39946063557&je=n&' border='0' width='0' height='0' alt=''>
+</noscript>
+
+</BODY>
+</HTML>
+-->
+<!-- This script is for AceCounter END 2015 09 09  박지문 -->
+
+<link rel="stylesheet" href="/kofic/comm/ckeditor5/sample/content-styles.css" type="text/css">
+<style>
+.kogl-img-small {
+    max-height: 40px;
+}
+</style>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        fn_initSet();
+
+        var targetUrl = location.href.substring(0, location.href.indexOf(".do", 0)+3);
+        $("#divGetUrl").find("span").text(targetUrl+$("#divGetUrl").find("span").text());
+    });
+
+    // E-mail 보내기
+    function fn_emailButton(){
+    	var opts = {};
+        opts["modal"] = true;
+        opts["resizable"] = true;
+        opts["fn_ok"] = "fn_emailSend";
+        fn_confirm("담당자에게 메일을 보내시겠습니까?", opts); // 모달로 창이 띄워짐
+    }
+
+    function fn_emailButton(){
+    	        	$("#form_detailBoard")[0].action = "emailPolicyList.do";
+    	            $("#form_detailBoard").submit();
+    }
+
+    // 목록으로이동
+    function fn_goList(){
+			var curPage = "1";
+			if(curPage == null || curPage == ""){
+				$("#form_detailBoard")[0].action = "findPolicyList.do";
+				$("#form_detailBoard").submit();
+			}else{
+				window.history.back();
+			}
+    }
+
+    // 내용 수정
+    function fn_updateButton(){
+        $("#form_detailBoard")[0].action = "checkPolicyAuth.do";
+        $("#form_detailBoard").submit();
+    }
+
+ 	// 게시물 삭제
+    function fn_deleteButton(){
+    	var opts = {};
+        opts["modal"] = true;
+        opts["resizable"] = true;
+        opts["fn_ok"] = "fn_deleteBoard";
+        fn_confirm("삭제하시겠습니까?", opts); // 모달로 창이 띄워짐
+    }
+
+    // 삭제
+    function fn_deleteBoard(){
+        $("#form_detailBoard")[0].action = "deletePolicy.do";
+        $("#form_detailBoard").submit();
+    }
+
+    // 파일 다운로드
+    function fn_fileDownload(saveLocation , systemFileName, realFileName) {
+
+        fn_downloadFile(saveLocation, systemFileName, realFileName);
+    }
+
+    function fn_fileDownloadCountSuccess(data){
+        // 다운로드 실패시 로직(DB쪽 문제가 발생할때만 처리)
+    }
+
+</script>
+</head>
+<body>
+    <span id="div_dialog_message" title=""></span>
+	<div class="wrap">
+	    <!-- header -->
+	    
+
+
+<!--
+*
+* @프로그램명 : 상단화면
+* @파일명 : top.jsp
+* @작성일 : 2012.06.21
+* @작성자 : 김동우A
+*
+-->
+
+
+<script type="text/javascript">
+//<![CDATA[
+    if('정책연구상세' != '') {
+    	document.title = '영화진흥위원회 [ 정책연구상세 ]';
+    }
+
+    var v_Change= "3";
+    var v_Alt= "";
+
+    // 클릭 시 value 초기화
+    function fn_valueClear(){
+        if(!$('.valueClear').length){return false};
+        $('.valueClear').click(function(){
+            $(this).val('');
+        });
+    }
+
+    // 상단 셋팅
+    function fn_tnbSetting() {
+        if(!$('#tnb').length){return false};
+        var tMenu = $('#tnb > div.navi > ul > li > a');
+        var depth2 = $('#tnb > div.navi> ul > li > div.depth2');
+        var tMenu2 = $('#tnb > div.navi> ul > li > div.depth2 ul li');
+
+        tMenu.bind('mouseover focus',function() {
+            $(this).parent().addClass('on');
+            tMenu.each(function() {
+                $(this).children('img').attr("src", $(this).children('img').attr('src').replace("_on.gif", "_off.gif"));
+                $(this).parent().children('.depth2').hide();
+            });
+            $(this).children('img').attr("src", $(this).children('img').attr('src').replace("_off.gif", "_on.gif"));
+            $(this).parent().children('.depth2').css("zIndex", SystemUtils.getMaxZIndex() + 1);
+            $(this).parent().children('.depth2').css("left", $(this).parent().children('.depth2').parent().offset().left - depth2.first().parent().offset().left + 18 - (128 - $(this).parent().children('.depth2').parent().find("a").width()) / 2);
+            $(this).parent().children('.depth2').show();
+        });
+        depth2.bind('mouseover focus',function() {
+            $(this).parent().addClass('on');
+            $(this).siblings('a').children('img').attr("src", $(this).siblings('a').children('img').attr('src').replace("_off.gif", "_on.gif"));
+            $(this).show();
+        });
+        tMenu.mouseout(function() {
+            $(this).parent().removeClass('on');
+            $(this).children('img').attr("src", $(this).children('img').attr('src').replace("_on.gif", "_off.gif"));
+            $(this).parent().children('.depth2').hide();
+        });
+        depth2.mouseout(function() {
+            $(this).parent().removeClass('on');
+            $(this).siblings('a').children('img').attr("src", $(this).siblings('a').children('img').attr('src').replace("_on.gif", "_off.gif"));
+            $(this).hide();
+        });
+    }
+
+    // 나의메뉴
+    function fn_myMenu(){
+        if(!$('.myMenu').length){return false};
+        $('#myMenu').click(function() {
+            if(!$(this).hasClass('on')){
+                $('.myMenu').show();
+                $('#myMenu').addClass('on');
+            } else {
+                $('.myMenu').hide();
+                $('#myMenu').removeClass('on');
+            }
+        });
+    }
+
+    // 전체 메뉴
+    function fn_allMenu(){
+        if(!$('#allMenuArea').length){return false};
+        $('#allMenu').click(function() {
+            if(!$(this).hasClass('on')){
+                //$('.boxIn').css("height", $('#allMenuArea').height());
+                $('#allMenuArea').fadeIn(500);
+                $('#allMenu').addClass('on');
+                $(this).children().attr('src', $(this).children().attr('src').replace('.gif','_on.gif'));
+
+            } else {
+                $('#allMenuArea').fadeOut();
+                $('#allMenu').removeClass('on');
+                $(this).children().attr('src', $(this).children().attr('src').replace('_on.gif','.gif'));
+
+            }
+        });
+    }
+
+
+    // 팝업존 다음
+    function fn_mainChange(){
+    	/*
+        if(v_Change=="1") {
+            v_Change = "2";
+            v_Alt = "한국 영화의 미래를 창조하는 베스트 파트너";
+        } else {
+            v_Change = "1";
+            v_Alt = "영화진흥위원회가 영화의 도시 부산으로!";
+        }
+    	*/
+
+    	v_Change = "3";
+
+        $("#mainImg").attr("src","/kofic/comm/images/common/top_visual0"+v_Change+".png");
+        $("#mainImg").attr("alt",v_Alt);
+    }
+
+    // 통합검색 - 원본백업
+    /* function fn_solrSearch() {
+        if($("#inp_solrSearch").val() == "") {
+            fn_alert("검색어를 입력하세요");
+            return;
+        }
+
+        var frmStr = "<form action='/kofic/business/comm/search.do' method='POST'>";
+        frmStr    += "<input type='hidden' name='queryString' value='" + $("#inp_solrSearch").val() + "' />";
+        frmStr    += "</form>";
+        $(frmStr).appendTo("body").submit();
+
+    } */
+    
+    // 통합검색
+    function fn_solrSearch() {
+        if($("#inp_solrSearch").val() == "") {
+            fn_alert("검색어를 입력하세요",  "focusId", "inp_solrSearch");
+            return;	
+        }
+        	
+        var str = $("#inp_solrSearch").val();
+    	  
+        str = str.replace(/\<|\>|\"|\'|\%|\;|\(|\)|\&|\+|\-/g,"");
+        str = str.replace(/\</g, "&lt;");
+        str = str.replace(/\>/g, "&gt;");
+
+        var frmStr = "<form name='searchForm' method='post' action='https://srch.kofic.or.kr/front/Search.jsp'  target='_blank' oxnSubmit='return searchEngine()'>";
+        frmStr    += "<input type='hidden' name='qt' value='" + str + "' />";
+        frmStr    += "</form>";
+        $(frmStr).appendTo("body").submit();
+
+    }
+    
+    // 인기검색어 연동
+    function fn_solrTopTen2(item) {
+
+		var str = item
+
+		str = str.replace(/\<|\>|\"|\'|\%|\;|\(|\)|\&|\+|\-/g, "");
+		str = str.replace(/\</g, "&lt;");
+		str = str.replace(/\>/g, "&gt;");
+
+		var frmStr = "<form name='searchForm' method='post' action='https://srch.kofic.or.kr/front/Search.jsp'  target='_blank' oxnSubmit='return searchEngine()'>";
+		frmStr += "<input type='hidden' name='qt' value='" + str + "' />";
+		frmStr += "</form>";
+		$(frmStr).appendTo("body").submit();
+
+	}
+    
+	
+    /**
+    function fn_setSearchEvent() {
+        fn_idToEnterFnExec("inp_solrSearch", "fn_solrSearch()");
+
+        $("#inp_solrSearch").autocomplete({
+            source: function( request, response ) {
+            	
+                $.ajax({
+                    url: "/kofic/business/comm/getSolrSearchAutoComplete.do",
+                    data: {
+                        queryString : encodeURIComponent($("#inp_solrSearch").val())
+                    },
+                    contentType : "application/json+sua",
+                    type : "get",
+                    dataType: "json",
+                    success: function( data ) {
+                    	try{
+                    		response($.map(data.suggest[0].alternatives, function( item ) {
+                                return {
+                                    label: item,
+                                    value: item
+                                };
+                            }));
+                    	}catch(e){
+                    		
+                    	}
+                        
+                    }
+                });
+                
+            },
+            minLength: 1
+        });
+    }
+    **/
+
+    // 로그아웃
+    function fn_kobisLogout() {
+    	var str = "<iframe id='fimsIframe'  name='fimsIframe' style='display:none;width:0px;height:0px;' title='fims logout'></iframe>";
+    	var iframe = document.getElementById('div_iframe');
+    	iframe.innerHTML = str;
+
+    	var fimsLogoutUrl = 'http://fims.kofic.or.kr/kobis/business/comm/user/logoutOuter.do';
+   		$("#fimsIframe").attr("src", fimsLogoutUrl);
+
+ 		setTimeout(function() {
+ 			$(location).attr('href', '/kofic/j_spring_security_logout');
+ 		}, 1000);
+    }
+
+    $(document).ready(function () {
+        fn_tnbSetting();
+        fn_valueClear();
+        fn_myMenu();
+        fn_allMenu();
+        
+        fn_topSearched2();
+        //fn_setSearchEvent();
+        setInterval(function(){ fn_mainChange(); },5000);
+        
+     // 통합검색 엔터이벤트 추가
+		$("#inp_solrSearch").keypress(function(event) {
+		     
+	        if (event.which == 13) {
+	            event.preventDefault(); 
+	            fn_solrSearch(); 
+	        }
+	    });
+     
+    });
+
+    function fn_kobisTaskSSO() {
+    	var params = {};
+		params["fn_success"] = "fn_kobisTaskSSOSuccess";
+		fn_ajaxJsonSua("/kofic/business/comm/getSecKey.do", params);
+	}
+
+    function fn_kobisTaskSSOSuccess(data) {
+    	var secKey = data.secKey[0].value;
+		if(secKey == null){
+			alert("관리자에게 문의바랍니다. ");
+		} else {
+			window.open("http://wiki.kofic.or.kr/kobisTask/login.do?secKey=" + secKey, "_blank");
+			window.focus();
+		}
+    }
+    
+   function fn_topSearched2(){
+		$.ajax({
+			url : 'https://srch.kofic.or.kr/front/weekly_api.jsp',
+			dataType : "xml",
+			type : "GET",
+			crossOrigin : true,
+			data : {},
+			success:function(result, status, xhr){ 
+			   $('#results').empty();
+			   var rank = 1;
+			   
+			   // the XML result 파싱, html 그리기
+               $(result).find('rank').each(function(){
+                   var item = $(this).text();
+                   var listItem = "<li><a href='#' onclick='fn_solrTopTen2(\"" + item + "\")'><span class='num'>" + String(rank).padStart(2, '0') + "</span> " + item + "</a></li>";
+                   $('#resultsTop').append(listItem);
+                   rank++;
+               });
+			  
+			  },
+			  error:function(xhr, status, error){ //실패 이벤트 핸들러
+			    console.log(error);
+			  }
+			
+		})
+	}
+	
+  //]]>
+  
+	function fntopFlag(){
+		document.getElementById("top_flag").classList.toggle('on');
+		
+		var topid = document.getElementById("chk_nuri");
+		
+		if(topid.style.display === 'none' || topid.style.display === '' ) {
+			topid.style.display = 'block';
+		} else {
+			topid.style.display = 'none';
+		}
+	};
+	
+	$(function() {
+
+	    var isMouseDown = false;
+
+	    var $myInfo = $('.gnb_wrap .my_info');
+	    var $myInfoBtn = $('.gnb_wrap .my_info > a');
+	    var $myInfoMenu = $('.gnb_wrap .my_info > .my_info_menu');
+
+	    var $sns = $('.gnb_wrap .top_lnk_sns');
+	    var $snsBtn = $('.sns_toggle');
+	    var $snsMenu = $('.sns_info_menu');
+
+
+	    /* =========================
+	     * 접근성 속성 설정
+	     * ========================= */
+	    $myInfoBtn.attr({
+	        'aria-haspopup': 'true',
+	        'aria-expanded': 'false'
+	    });
+
+
+	    /* =========================
+	     * 마우스 사용 여부 체크
+	     * ========================= */
+	    $(document).on('mousedown', function() {
+	        isMouseDown = true;
+	    });
+
+	    $(document).on('mouseup', function() {
+	        setTimeout(function() {
+	            isMouseDown = false;
+	        }, 0);
+	    });
+
+
+	    /* =========================
+	     * 사용자 정보 메뉴 클릭
+	     * ========================= */
+	    $myInfoBtn.on('click', function(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+
+	        var $btn = $(this);
+	        var $menu = $btn.siblings('.my_info_menu');
+	        var isOpen = $menu.is(':visible');
+
+	        // SNS 메뉴 닫기
+	        $snsMenu.hide();
+	        $snsBtn.attr('aria-expanded', 'false');
+
+	        // 사용자 메뉴 토글
+	        if (isOpen) {
+	            $menu.hide();
+	            $btn.attr('aria-expanded', 'false');
+	        } else {
+	            $menu.show();
+	            $btn.attr('aria-expanded', 'true');
+	        }
+	    });
+
+
+	    /* =========================
+	     * SNS 메뉴 클릭
+	     * ========================= */
+	    $snsBtn.on('click', function(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+
+	        var $btn = $(this);
+	        var $menu = $btn.next('.sns_info_menu');
+	        var isOpen = $menu.is(':visible');
+
+	        // 사용자 메뉴 닫기
+	        $myInfoMenu.hide();
+	        $myInfoBtn.attr('aria-expanded', 'false');
+
+	        // SNS 메뉴 토글
+	        if (isOpen) {
+	            $menu.hide();
+	            $btn.attr('aria-expanded', 'false');
+	        } else {
+	            $menu.show();
+	            $btn.attr('aria-expanded', 'true');
+	        }
+	    });
+
+
+	    /* =========================
+	     * 키보드 Tab 접근
+	     * ========================= */
+
+	    // 사용자 메뉴
+	    $myInfo.on('focusin', function() {
+
+	        // 마우스로 클릭하면서 발생한 focus는 무시
+	        if (isMouseDown) {
+	            return;
+	        }
+
+	        // SNS 닫기
+	        $snsMenu.hide();
+	        $snsBtn.attr('aria-expanded', 'false');
+
+	        // 사용자 메뉴 열기
+	        $(this).children('.my_info_menu').show();
+	        $(this).children('a').attr('aria-expanded', 'true');
+	    });
+
+
+	    // SNS 메뉴
+	    $sns.on('focusin', function() {
+
+	        // 마우스로 클릭하면서 발생한 focus는 무시
+	        if (isMouseDown) {
+	            return;
+	        }
+
+	        // 사용자 메뉴 닫기
+	        $myInfoMenu.hide();
+	        $myInfoBtn.attr('aria-expanded', 'false');
+
+	        // SNS 열기
+	        $(this).children('.sns_info_menu').show();
+	        $(this).children('.sns_toggle')
+	               .attr('aria-expanded', 'true');
+	    });
+
+
+	    /* =========================
+	     * 포커스가 영역을 벗어나면 닫기
+	     * ========================= */
+
+	    // 사용자 메뉴
+	    $myInfo.on('focusout', function() {
+	        var $item = $(this);
+
+	        setTimeout(function() {
+	            if (!$item[0].contains(document.activeElement)) {
+	                $item.children('.my_info_menu').hide();
+	                $item.children('a')
+	                     .attr('aria-expanded', 'false');
+	            }
+	        }, 0);
+	    });
+
+
+	    // SNS 메뉴
+	    $sns.on('focusout', function() {
+	        var $item = $(this);
+
+	        setTimeout(function() {
+	            if (!$item[0].contains(document.activeElement)) {
+	                $item.children('.sns_info_menu').hide();
+	                $item.children('.sns_toggle')
+	                     .attr('aria-expanded', 'false');
+	            }
+	        }, 0);
+	    });
+
+
+	    /* =========================
+	     * 메뉴 바깥 영역 클릭
+	     * ========================= */
+	    $(document).on('click', function(e) {
+
+	        // 사용자 메뉴 바깥 클릭
+	        if (!$(e.target).closest('.my_info').length) {
+	            $myInfoMenu.hide();
+	            $myInfoBtn.attr('aria-expanded', 'false');
+	        }
+
+	        // SNS 메뉴 바깥 클릭
+	        if (!$(e.target).closest('.top_lnk_sns').length) {
+	            $snsMenu.hide();
+	            $snsBtn.attr('aria-expanded', 'false');
+	        }
+
+	    });
+
+	});
+	$(function () {
+
+		$('.top_search_input input').on('input', function () {
+			var $clearBtn = $(this).siblings('.btn_search_clear');
+
+			if ($(this).val().length > 0) {
+				$clearBtn.addClass('on');
+			} else {
+				$clearBtn.removeClass('on');
+			}
+		});
+
+		$('.btn_search_clear').on('click', function () {
+			var $input = $(this).siblings('input');
+
+			$input.val('');
+			$(this).removeClass('on');
+			$input.focus();
+		});
+
+	});
+	
+</script>
+<!--GNB-->
+
+<div class="dim"></div>
+<!-- 전자정부표시 -->
+<div class="top_line_bnr">
+	<div class="top_link_wrap">
+		<div class="inner">
+			<input type="hidden" name="isinternal3" value="N"> 
+			<input type="hidden" name="isinternal2" value="N">
+			<div class="top_flag_wrap">
+				<p class="top_flag_in">
+					<img src="/kofic/comm/img/common/header_flag.png" alt="태극기">이 누리집은 대한민국 공식 전자정부 누리집입니다.
+				</p>
+				<!-- <button class="top_flag_info" id="top_flag" onclick="fntopFlag();">공식 누리집 확인방법 <span>열기</span></button> -->
+			</div>
+		</div>
+	</div>
+	<!-- <div class="chk_nuri_addr_bnr" style="display: none;" id="chk_nuri">
+		<div class="inner">
+			<strong>공식 누리집 주소 확인하기</strong>
+			<p>go.kr 주소를 사용하는 누리집은 대한민국 정부기관이 관리하는 누리집입니다. <br> 
+			이 밖에 or.kr 또는.kr등 다른 도메인 주소를 사용하고 있다면 아래 URL에서 도메인 주소를 확인해 보세요. <br>
+				<a href="https://uiux.egovframe.go.kr/" target="_blank" title="새창으로">운영중인 	공식 누리집보기</a>
+			</p>
+		</div>
+	</div> -->
+</div>
+<!-- 전자정부표시 -->
+<script>
+	
+</script>
+<div class="gnb_wrap" id="top_info">
+	<div class="gnb">
+		<ul>
+			<!-- 20191209 추가-->
+			
+			<li class="top_lnk_main">
+				<a href="#content" class="access" title="본문 바로가기">본문 바로가기 </a>
+			</li>
+			
+			<li class="top_lnk_login">
+				<a href="/kofic/business/user/openLogin.do">로그인</a>
+			</li>
+			<li class="top_lnk_join">
+				<a href="/kofic/business/comm/memAgreeM.do">회원가입</a>
+			</li>
+			
+			<li class="top_lnk_english">
+				<a href="http://www.koreanfilm.or.kr/eng/main/main.jsp">ENGLISH</a>
+			</li>
+			<li class="top_lnk_sns">
+				<a href="#sns_info" class="sns_toggle" title="SNS 메뉴" aria-haspopup="true" aria-expanded="false">
+					SNS
+					<span class="sns_toggle_arrow">&gt;</span>					
+				</a>
+			
+				<ul class="my_info_menu sns_info_menu" id="sns_info" style="display: none;">
+					<li>
+						<a href="https://www.instagram.com/koreanfilmcouncil_kofic/"
+						   target="_blank"
+						   aria-label="인스타그램 바로가기, 새 창">
+							<img src="/kofic/comm/img/common/btn_instagram_32.png" alt="">
+							<span>인스타그램</span>
+						</a>
+					</li>
+				
+					<li>
+						<a href="https://www.facebook.com/KOFIC/"
+						   target="_blank"
+						   aria-label="페이스북 바로가기, 새 창">
+							<img src="/kofic/comm/img/common/btn_facebook_32.png" alt="">
+							<span>페이스북</span>
+						</a>
+					</li>
+				
+					<li>
+						<a href="https://www.youtube.com/@koreanfilmcouncil"
+						   target="_blank"
+						   aria-label="유튜브 바로가기, 새 창">
+							<img src="/kofic/comm/img/common/btn_youtube_32.png" alt="">
+							<span>유튜브</span>
+						</a>
+					</li>
+				
+					<li>
+						<a href="https://post.naver.com/kofic_pr"
+						   target="_blank"
+						   aria-label="네이버포스트 바로가기, 새 창">
+							<img src="/kofic/comm/img/common/btn_naver_post_32.png" alt="">
+							<span>네이버포스트</span>
+						</a>
+					</li>
+				
+					<li>
+						<a href="https://blog.naver.com/kofic_pr"
+						   target="_blank"
+						   aria-label="네이버블로그 바로가기, 새 창">
+							<img src="/kofic/comm/img/common/btn_naver_blog_32.png" alt="">
+							<span>네이버블로그</span>
+						</a>
+					</li>
+				
+					<li>
+						<a href="https://pf.kakao.com/_ymWSxb"
+						   target="_blank"
+						   aria-label="카카오톡 바로가기, 새 창">
+							<img src="/kofic/comm/img/common/btn_kakao_32.png" alt="">
+							<span>카카오톡</span>
+						</a>
+					</li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+</div>
+<!--//GNB-->
+
+
+<!--TOP-->
+<div class="top_wrap">
+	<div class="top">
+		<h1 class="top_logo">
+			<a href="/kofic"><img src="/kofic/comm/img/common/top_logo.svg" alt="영화진흥위원회" /></a>
+		</h1>
+		<!--TOP_NEVI-->
+		
+		<div class="top_nav">
+			<ul>
+			
+		
+				<li class="top_nevi01">
+		
+					<!-- 1Depth -->
+					<a href="/kofic/business/cust/introQnA.do">
+					
+						고객센터
+					
+					</a>
+		
+		
+					<!-- 해당 1Depth의 메가메뉴 -->
+					
+		
+					<div class="openmenu_wrap openmenu01">
+		
+						<div class="openmenu">
+		
+							<div class="openmenu_title_box">
+		
+								<p class="openmenu_title">
+									고객센터
+								</p>
+		
+								
+		
+								<div class="icon_openmenu_img">
+								
+									<img
+										src="/kofic/comm/img/common/icon_openmenu_img01.png"
+										alt=""
+									/>
+								
+								</div>
+		
+							</div>
+		
+		
+							<div class="openmenu_con">
+								<ul>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/cust/introQnA.do"
+												
+											>
+												고객소통
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/introQnA.do">
+														- 묻고답하기
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/introProp.do">
+														- 국민제안
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/introEQnA.do">
+														- 전자민원
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/guid/introUnfairCaNM.do"
+												
+											>
+												상담•신고
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introUnfairCaNM.do">
+														- 공정환경조성센터
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/equalityCenter.do">
+														- 한국영화성평등센터
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introClean.do">
+														- 클린센터
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/guid/introGuideArt.do"
+												
+											>
+												업무•신청
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuideArt.do">
+														- 예술영화인정
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuideKorMovie.do">
+														- 독립영화인정
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuideGrade.do">
+														- 등급분류면제추천
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="https://www.kobiz.or.kr/new/kor/02_overseas/production/korMovieAuthInfo.jsp">
+														- 한국영화인정
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuideExempt.do">
+														- 10억미만영화인정
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuideFund.do">
+														- 입장권부과금징수안내
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introVideoInvestment.do">
+														- 영상전문투자조합현황
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/infm/findJobList.do"
+												
+											>
+												영화계소식•구인정보
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/infm/findJobList.do">
+														- 영화계 구인정보
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=5">
+														- 영화계소식
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/guid/introGuide.do"
+												
+											>
+												이용안내
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuide.do">
+														- 이용자가이드
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introCopyright.do">
+														- 저작권정책
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introPersonInfo.do">
+														- 개인정보처리방침
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introSafetyPolicy.do">
+														- 안전보건경영방침
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introEquipment.do">
+														- CCTV운영·관리방침
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/guid/introGuideArs.do">
+														- ARS구성도
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list last_tab">
+		
+													<a href="/kofic/business/guid/introSitemap.do">
+														- 사이트맵
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+								</ul>
+							</div>
+		
+						</div>
+		
+					</div>
+		
+					
+		
+				</li>
+		
+			
+		
+				<li class="top_nevi02">
+		
+					<!-- 1Depth -->
+					<a href="/kofic/business/board/selectBoardList.do?boardNumber=4">
+					
+						알림마당
+					
+					</a>
+		
+		
+					<!-- 해당 1Depth의 메가메뉴 -->
+					
+		
+					<div class="openmenu_wrap openmenu02">
+		
+						<div class="openmenu">
+		
+							<div class="openmenu_title_box">
+		
+								<p class="openmenu_title">
+									알림마당
+								</p>
+		
+								
+		
+								<div class="icon_openmenu_img">
+								
+									<img
+										src="/kofic/comm/img/common/icon_openmenu_img02.png"
+										alt=""
+									/>
+								
+								</div>
+		
+							</div>
+		
+		
+							<div class="openmenu_con">
+								<ul>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/board/selectBoardList.do?boardNumber=4"
+												
+											>
+												공지사항
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/noti/findNewsList.do"
+												
+											>
+												KOFIC뉴스
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/board/selectBoardList.do?boardNumber=6"
+												
+											>
+												입찰공고
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/findRuleListQ.do"
+												
+											>
+												규정예고
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/board/selectBoardList.do?boardNumber=181"
+												
+											>
+												보도자료
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/noti/findNewLetterList.do"
+												
+											>
+												뉴스레터
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title last_tab">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="http://magazine.kofic.or.kr"
+												
+											>
+												웹진 한국영화
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+								</ul>
+							</div>
+		
+						</div>
+		
+					</div>
+		
+					
+		
+				</li>
+		
+			
+		
+				<li class="top_nevi03">
+		
+					<!-- 1Depth -->
+					<a href="/kofic/business/prom/introPromotion.do">
+					
+						사업안내
+					
+					</a>
+		
+		
+					<!-- 해당 1Depth의 메가메뉴 -->
+					
+		
+					<div class="openmenu_wrap openmenu03">
+		
+						<div class="openmenu">
+		
+							<div class="openmenu_title_box">
+		
+								<p class="openmenu_title">
+									사업안내
+								</p>
+		
+								
+		
+								<div class="icon_openmenu_img">
+								
+									<img
+										src="/kofic/comm/img/common/icon_openmenu_img03.png"
+										alt=""
+									/>
+								
+								</div>
+		
+							</div>
+		
+		
+							<div class="openmenu_con">
+								<ul>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/prom/introPromotion.do"
+												
+											>
+												사업개요
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/prom/promotionBoardList.do"
+												
+											>
+												사업공지
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/prom/findPromotionYearList.do"
+												
+											>
+												세부사업
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/prom/findPromotionYearList.do">
+														- 세부사업
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title last_tab">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/board/selectBoardList.do?boardNumber=44"
+												
+											>
+												사업자료실
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+								</ul>
+							</div>
+		
+						</div>
+		
+					</div>
+		
+					
+		
+				</li>
+		
+			
+		
+				<li class="top_nevi04">
+		
+					<!-- 1Depth -->
+					<a href="/kofic/business/rsch/findPolicyList.do">
+					
+						<span>정보•자료</span>
+					
+					</a>
+		
+		
+					<!-- 해당 1Depth의 메가메뉴 -->
+					
+		
+					<div class="openmenu_wrap openmenu04">
+		
+						<div class="openmenu">
+		
+							<div class="openmenu_title_box">
+		
+								<p class="openmenu_title">
+									정보•자료
+								</p>
+		
+								
+		
+								<div class="icon_openmenu_img">
+								
+									<img
+										src="/kofic/comm/img/common/icon_openmenu_img04.png"
+										alt=""
+									/>
+								
+								</div>
+		
+							</div>
+		
+		
+							<div class="openmenu_con">
+								<ul>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/rsch/findPolicyList.do"
+												
+											>
+												연구·통계
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/rsch/findPolicyList.do">
+														- 정책연구
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=2">
+														- 산업통계
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/rsch/findPublishList.do?flag=1">
+														- 발간자료
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/infm/introBoxOffice.do"
+												
+											>
+												영화정보자료
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/infm/introBoxOffice.do">
+														- 박스오피스
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/infm/introData.do">
+														- 영화DB검색
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/infm/introFims.do">
+														- 영화정보통합관리창구
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=3">
+														- 영화제작현황
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=381">
+														- 블랙리스트특별위원회 자료실
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=441">
+														- 포스트코로나영화정책추진단
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="https://mlib.kofic.or.kr/main.do?action=main">
+														- KOFIC 자료실
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/board/selectBoardList.do?boardNumber=402"
+												
+											>
+												역대 사업
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list last_tab">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=402">
+														- 코로나19 특별지원사업(운영종료) 
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+								</ul>
+							</div>
+		
+						</div>
+		
+					</div>
+		
+					
+		
+				</li>
+		
+			
+		
+				<li class="top_nevi05">
+		
+					<!-- 1Depth -->
+					<a href="/kofic/business/cust/introInfos.do">
+					
+						열린경영
+					
+					</a>
+		
+		
+					<!-- 해당 1Depth의 메가메뉴 -->
+					
+		
+					<div class="openmenu_wrap openmenu05">
+		
+						<div class="openmenu">
+		
+							<div class="openmenu_title_box">
+		
+								<p class="openmenu_title">
+									열린경영
+								</p>
+		
+								
+		
+								<div class="icon_openmenu_img">
+								
+									<img
+										src="/kofic/comm/img/common/icon_openmenu_img05.png"
+										alt=""
+									/>
+								
+								</div>
+		
+							</div>
+		
+		
+							<div class="openmenu_con">
+								<ul>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/cust/introInfos.do"
+												
+											>
+												정보공개
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/introInfos.do">
+														- 정보공개
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/introInfoGuide.do">
+														- 사전정보공표
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/findBusinessReal.do">
+														- 사업실명제
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=15">
+														- 정보목록
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/cust/findPublicData.do">
+														- 공공데이터개방
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/board/selectBoardList.do?boardNumber=85"
+												
+											>
+												경영공시
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introMngComb.do">
+														- 통합공시
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introMngSelf_16.do">
+														- 자체공시
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/omng/introCustCharter.do"
+												
+											>
+												고객헌장
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introCustCharter.do">
+														- KOFIC고객헌장
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introCustCharterStand.do">
+														- 서비스이행표준
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/omng/introEthics.do"
+												
+											>
+												윤리경영
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introEthics.do">
+														- 윤리경영소개
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introEthics_01.do">
+														- 윤리규범
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introEthicsAction.do">
+														- 윤리경영추진활동
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/ifs/ifsImpDayList.do"
+												
+											>
+												재정 정보공개
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/ifs/ifsImpDayList.do">
+														- 기금 운용상황
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/ifs/ifsOwnImpDayList.do">
+														- 자체 운용상황
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/omng/introSocial.do"
+												
+											>
+												사회공헌
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/omng/introHrBusi.do?flag=1"
+												
+											>
+												인권경영
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introHrBusi.do?flag=0">
+														- 인권경영 추진체계
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introHrBusi.do?flag=1">
+														- 인권경영선언
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/omng/introHrBusi.do?flag=2">
+														- 인권경영 이행지침
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list last_tab">
+		
+													<a href="/kofic/business/board/selectBoardList.do?boardNumber=362">
+														- 인권경영 자료실
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+								</ul>
+							</div>
+		
+						</div>
+		
+					</div>
+		
+					
+		
+				</li>
+		
+			
+		
+				<li class="top_nevi06">
+		
+					<!-- 1Depth -->
+					<a href="/kofic/business/intr/introKofic_01.do">
+					
+						KOFIC소개
+					
+					</a>
+		
+		
+					<!-- 해당 1Depth의 메가메뉴 -->
+					
+		
+					<div class="openmenu_wrap openmenu06">
+		
+						<div class="openmenu">
+		
+							<div class="openmenu_title_box">
+		
+								<p class="openmenu_title">
+									KOFIC소개
+								</p>
+		
+								
+		
+								<div class="icon_openmenu_img">
+								
+									<img
+										src="/kofic/comm/img/common/icon_openmenu_img06.png"
+										alt=""
+									/>
+								
+								</div>
+		
+							</div>
+		
+		
+							<div class="openmenu_con">
+								<ul>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/introKofic_01.do"
+												
+											>
+												일반현황
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introKofic_01.do">
+														- 설립목적
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introKofic_02.do">
+														- 미션과비전
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introCoreVal.do">
+														- 핵심가치
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introKofic_05.do">
+														- 연혁
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/findRuleList.do">
+														- 정관 및 제규정
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/introLeader.do"
+												
+											>
+												위원장소개
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introLeader.do">
+														- 위원장 인사말
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introLeaderHis.do">
+														- 역대위원장
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/findCommiteeInfoList.do"
+												
+											>
+												위원회운영
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/findCommiteeInfoList.do">
+														- 위원 및 감사
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/findConferenceInfoList.do">
+														- 회의개최 및 결과
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/findConferenceResultList.do">
+														- 연도별안건결과
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introCommitOrg.do">
+														- 위원회구성
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/introOrg.do"
+												
+											>
+												조직안내
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/introRecurit.do"
+												
+											>
+												채용안내
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/introCI.do"
+												
+											>
+												사이버홍보실
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introCI.do">
+														- CI소개
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introPamplet.do">
+														- 팜플렛
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introFilm.do">
+														- 리더필름
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/intro3D.do">
+														- 입체영화 관람전 안내영상
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introCharacter.do">
+														- 캐릭터소개
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+									<li class="openmenu_con_list">
+		
+										<p class="openmenu_con_list_title ">
+		
+											<a
+												class="openmenu_con_li_a"
+												href="/kofic/business/intr/introRoad_01.do"
+												
+											>
+												시설안내
+											</a>
+		
+										</p>
+		
+		
+										
+		
+		
+										
+		
+										<div class="openmenu_con_2depth">
+											<ul>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introRoad_01.do">
+														- 오시는길
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introFacility_01.do">
+														- KOFIC 시설안내
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list ">
+		
+													<a href="/kofic/business/intr/introCARoom.do">
+														- 표준시사실
+													</a>
+		
+												</li>
+		
+											
+		
+												<li class="openmenu_con_2depth_list last_tab">
+		
+													<a href="/kofic/business/intr/introKBGStudio.do">
+														- 부산기장촬영소
+													</a>
+		
+												</li>
+		
+											
+		
+											</ul>
+										</div>
+		
+										
+		
+									</li>
+		
+								
+		
+								</ul>
+							</div>
+		
+						</div>
+		
+					</div>
+		
+					
+		
+				</li>
+		
+			
+		
+			</ul>
+		</div>
+	<!-- top_nav -->
+
+		<div class="btn_top_etc">
+			<span> 
+				<a href="javascript:void(0)" class="toggle-search" aria-label="검색창 열기 또는 닫기">
+				  <span class="hidden">검색창 열기 또는 닫기</span>
+					<svg id="search_IMG" role="img" aria-hidden="true" class="search_IMG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+						<g id="search_IMG_1">
+							<path class=" effect" d="M21.48,23.57l-5.97-5.9c-1.66,1.16-3.64,1.78-5.66,1.77C4.45,19.47,.04,15.12,0,9.72,.04,4.32,4.44-.02,9.84,0c5.4-.02,9.8,4.32,9.84,9.72,0,2.15-.72,4.24-2.05,5.93l5.93,5.85c.57,.56,.58,1.48,.02,2.04l-.02,.02c-.28,.27-.65,.43-1.04,.43-.39,0-.77-.15-1.04-.43ZM2.95,9.72c.03,3.78,3.11,6.83,6.89,6.81,3.78,.02,6.86-3.03,6.89-6.81-.03-3.78-3.11-6.83-6.89-6.81-3.78-.02-6.86,3.03-6.89,6.81Z" />
+						</g>
+					</svg>
+					<svg id="close_IMG" role="img" aria-hidden="true" class="close_IMG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.64 19.53">
+						<g id="close_IMG_1">
+							<path class=" effect" d="M19.27,17.25l-7.5-7.4,7.4-7.5c.6-.6,.6-1.4,0-1.9-.5-.6-1.4-.6-1.9,0l-7.4,7.5L2.28,.45C1.67-.15,.88-.15,.38,.45-.12,.95-.12,1.85,.38,2.35l7.5,7.4L.47,17.25c-.6,.5-.6,1.4,0,1.9,.5,.5,1.4,.5,1.9,0l7.4-7.5,7.5,7.4c.5,.5,1.4,.5,1.9,0,.6-.5,.6-1.3,.1-1.8Z" />
+						</g>
+					</svg>
+				</a>
+			</span>
+			<span>
+				<a href="/kofic/business/guid/introSitemap.do" aria-label="사이트맵 페이지로 이동">
+				  <span class="hidden">사이트맵 페이지로 이동</span>
+					<svg version="1.1" id="sitemap_IMG" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 24 21" style="enable-background: new 0 0 24 21;" xml:space="preserve">
+						<g id="sitemap_IMG_1">
+							<g transform="translate(-1353.5 -43)">
+								<path class=" effect" d="M1355,43h21c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-21c-0.8,0-1.5-0.7-1.5-1.5l0,0C1353.5,43.7,1354.2,43,1355,43z" />
+								<path class=" effect" d="M1355,52h21c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-21c-0.8,0-1.5-0.7-1.5-1.5l0,0C1353.5,52.7,1354.2,52,1355,52z" />
+								<path class=" effect" d="M1355,61h21c0.8,0,1.5,0.7,1.5,1.5s-0.7,1.5-1.5,1.5h-21c-0.8,0-1.5-0.7-1.5-1.5S1354.2,61,1355,61z" />
+							</g>
+						</g>
+					</svg>
+				</a> 
+			</span>
+		</div>
+ 
+<!--//TOP_NEVI-->
+
+<!-- <div class="celebrate_logo">
+				<a href="/koreanfilm100years/" target="_blank" aria-label="한국영화 100년 기념사업 홈페이지 바로가기, 새 창 ><img src="/kofic/comm/img/common/100_logo.png" alt="한국영화 100년 기념사업 홈페이지" title="한국영화 100년 기념사업 홈페이지" /></a>
+			</div> -->
+
+		<div class="btn_mobile_nevi">
+			<a href="javascript:void(0)" class="toggle-search effect" aria-label="검색창 열기 또는 닫기">
+			  <span class="hidden">검색창 열기 또는 닫기</span>
+				<svg id="search_IMG_m" class="search_IMG" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+					<g id="search_IMG_m_g">
+						<path d="M21.48,23.57l-5.97-5.9c-1.66,1.16-3.64,1.78-5.66,1.77C4.45,19.47,.04,15.12,0,9.72,.04,4.32,4.44-.02,9.84,0c5.4-.02,9.8,4.32,9.84,9.72,0,2.15-.72,4.24-2.05,5.93l5.93,5.85c.57,.56,.58,1.48,.02,2.04l-.02,.02c-.28,.27-.65,.43-1.04,.43-.39,0-.77-.15-1.04-.43ZM2.95,9.72c.03,3.78,3.11,6.83,6.89,6.81,3.78,.02,6.86-3.03,6.89-6.81-.03-3.78-3.11-6.83-6.89-6.81-3.78-.02-6.86,3.03-6.89,6.81Z" />
+					</g>
+				</svg>
+				<svg id="close_IMG_m" class="close_IMG" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.64 19.53">
+					<g id="close_IMG_m_g">
+						<path d="M19.27,17.25l-7.5-7.4,7.4-7.5c.6-.6,.6-1.4,0-1.9-.5-.6-1.4-.6-1.9,0l-7.4,7.5L2.28,.45C1.67-.15,.88-.15,.38,.45-.12,.95-.12,1.85,.38,2.35l7.5,7.4L.47,17.25c-.6,.5-.6,1.4,0,1.9,.5,.5,1.4,.5,1.9,0l7.4-7.5,7.5,7.4c.5,.5,1.4,.5,1.9,0,.6-.5,.6-1.3,.1-1.8Z" />
+					</g>
+				</svg>
+			</a> 
+			<a href="javascript:void();" class="sb-open-right" title="사이트맵">
+			  <span class="hidden">사이트맵 페이지로 이동</span>
+				<svg version="1.1" id="sitemap_IMG_m" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 24 21" style="enable-background: new 0 0 24 21;" xml:space="preserve">
+					<g id="sitemap_IMG_m_g">
+						<g transform="translate(-1353.5 -43)">
+							<path class=" effect" d="M1355,43h21c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-21c-0.8,0-1.5-0.7-1.5-1.5l0,0C1353.5,43.7,1354.2,43,1355,43z" />
+							<path class=" effect" d="M1355,52h21c0.8,0,1.5,0.7,1.5,1.5l0,0c0,0.8-0.7,1.5-1.5,1.5h-21c-0.8,0-1.5-0.7-1.5-1.5l0,0C1353.5,52.7,1354.2,52,1355,52z" />
+							<path class=" effect" d="M1355,61h21c0.8,0,1.5,0.7,1.5,1.5s-0.7,1.5-1.5,1.5h-21c-0.8,0-1.5-0.7-1.5-1.5S1354.2,61,1355,61z" />
+						</g>
+					</g> 
+				</svg>
+			</a>
+		</div>
+	</div>
+</div>
+<form name="searchPop" id="searchPop">
+	<div class="hd_login_sch effect">
+		<div class="inner">
+			<div class="top_search_wrap effect banner">
+				<div class="top_search_input">
+					<input type="text"
+						   style="ime-mode: active;"
+						   id="inp_solrSearch"
+						   name="qt"
+						   title="검색어 입력"
+						   placeholder="검색어를 입력해주세요.">
+				
+					<button type="button"
+							class="btn_search_clear"
+							title="검색어 전체 삭제"
+							aria-label="검색어 전체 삭제">
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="search_droprank">
+			<p class="rank_ttl">인기 검색어</p>
+			<ul class="ul_rank" id="resultsTop">
+
+				<!-- 															   <li><a href="#"><span class="num">01</span>애니메이션 영화 제작 지원</a></li>
+																<li><a href="#"><span class="num">02</span>dmz</a></li>
+																<li><a href="#"><span class="num">03</span>시나리오</a></li>
+																<li><a href="#"><span class="num">04</span>점유율</a></li>
+																<li><a href="#"><span class="num">05</span>pa</a></li>
+																<li><a href="#"><span class="num">06</span>cg</a></li>
+																<li><a href="#"><span class="num">07</span>예술영화전용관 운영지원</a></li>
+																<li><a href="#"><span class="num">08</span>독립영화</a></li>
+																<li><a href="#"><span class="num">09</span>디지털</a></li>
+																<li><a href="#"><span class="num">10</span>마케팅비용</a></li>  -->
+			</ul>
+		</div>
+	</div>
+</form>
+<!--//TOP-->
+
+
+
+<!--OPEN_MENU01_진흥사업안내-->
+
+
+<!--MOBILE_MENU-->
+<div class="sb-slidebar sb-right sb-style-overlay mobile_nevi_wrap" style="display: none">
+	<div class="mobile_nevi_top" style="line-height: 20px;">
+		<span class="btn_m_close sb-close">
+			<a href="#"><img src="/kofic/comm/img/common/btn_m_close.png" alt="닫 기" /></a>전체메뉴
+		</span>
+		<br>
+		<br>
+		<!-- <span class="btn_m_twitter"><a href="https://twitter.com/kofic_kr" target="_blank"><img src="/kofic/comm/img/common/btn_m_twitter.png" alt="트위터" /></a></span> -->
+		<!-- <span class="btn_m_twitter"><a href="https://www.facebook.com/KOFIC/" target="_blank"><img src="/kofic/comm/img/common/btn_m_facebook.png" alt="페이스북" /></a></span> -->
+		<span>
+			<a href="https://www.instagram.com/koreanfilmcouncil_kofic/" target="_blank" aria-label="인스타그램 바로가기, 새 창">
+				<img style="font-size: 15px;" src="/kofic/comm/img/common/btn_instagram_32.png" alt="인스타그램" />
+			</a>
+		</span>
+		<span>
+			<a href="https://www.facebook.com/KOFIC/" target="_blank" aria-label="페이스북 바로가기, 새 창">
+				<img style="font-size: 15px;" src="/kofic/comm/img/common/btn_facebook_32.png" alt="페이스북" />
+			</a>
+		</span>
+		<span>
+			<a href="https://www.youtube.com/@koreanfilmcouncil" target="_blank" aria-label="유튜브 바로가기, 새 창">
+				<img style="font-size: 15px;" src="/kofic/comm/img/common/btn_youtube_32.png" alt="유튜브" />
+			</a>
+		</span>
+		<span>
+			<a href="https://post.naver.com/kofic_pr" target="_blank" aria-label="네이버포스트 바로가기, 새 창">
+				<img style="font-size: 15px;" src="/kofic/comm/img/common/btn_naver_post_32.png" alt="" />
+			</a>
+		</span>
+		<span>
+			<a href="https://blog.naver.com/kofic_pr" target="_blank" aria-label="네이버블로그 바로가기, 새 창">
+				<img style="font-size: 15px;" src="/kofic/comm/img/common/btn_naver_blog_32.png" alt="네이버블로그">
+			</a>
+		</span>
+		<span>
+			<a href="https://pf.kakao.com/_ymWSxb" target="_blank" aria-label="카카오톡 바로가기, 새 창">
+				<img style="font-size: 15px;" src="/kofic/comm/img/common/btn_kakao_32.png" alt="카카오톡" />
+			</a>
+		</span>
+	</div>
+
+	<div class="mobile_nevi_etc_menu">
+		<ul>
+			<li><a href="/kofic">HOME</a></li>
+			
+			<li><a href="/kofic/business/user/openLogin.do">로그인</a></li>
+			<li><a href="/kofic/business/comm/memAgreeM.do">회원가입</a></li>
+			
+			<li><a href="#">ENGLISH</a></li>
+		</ul>
+	</div>
+
+	<div class="tm_m_menu">
+		<ul id="tm_m_ul">
+			
+			<li class="tm_m_li">
+			
+				<div class="tm_m_list">고객센터</div>
+			
+				<ul class="tm_m_2depth">
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/cust/introQnA.do">고객소통</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/introQnA.do">묻고답하기</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/introProp.do">국민제안</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/introEQnA.do">전자민원</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/guid/introUnfairCaNM.do">상담•신고</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introUnfairCaNM.do">공정환경조성센터</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/equalityCenter.do">한국영화성평등센터</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introClean.do">클린센터</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/guid/introGuideArt.do">업무•신청</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuideArt.do">예술영화인정</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuideKorMovie.do">독립영화인정</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuideGrade.do">등급분류면제추천</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="https://www.kobiz.or.kr/new/kor/02_overseas/production/korMovieAuthInfo.jsp">한국영화인정</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuideExempt.do">10억미만영화인정</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuideFund.do">입장권부과금징수안내</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introVideoInvestment.do">영상전문투자조합현황</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/infm/findJobList.do">영화계소식•구인정보</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/infm/findJobList.do">영화계 구인정보</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=5">영화계소식</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/guid/introGuide.do">이용안내</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuide.do">이용자가이드</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introCopyright.do">저작권정책</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introPersonInfo.do">개인정보처리방침</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introSafetyPolicy.do">안전보건경영방침</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introEquipment.do">CCTV운영·관리방침</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introGuideArs.do">ARS구성도</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/guid/introSitemap.do">사이트맵</a></li>
+					
+						</ul>
+					</div>
+				
+				</ul>
+			</li>
+			
+			<li class="tm_m_li">
+			
+				<div class="tm_m_list">알림마당</div>
+			
+				<ul class="tm_m_2depth">
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=4">공지사항</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/noti/findNewsList.do">KOFIC뉴스</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=6">입찰공고</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/findRuleListQ.do">규정예고</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=181">보도자료</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/noti/findNewLetterList.do">뉴스레터</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="http://magazine.kofic.or.kr">웹진 한국영화</a></li>
+				
+				</ul>
+			</li>
+			
+			<li class="tm_m_li">
+			
+				<div class="tm_m_list">사업안내</div>
+			
+				<ul class="tm_m_2depth">
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/prom/introPromotion.do">사업개요</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/prom/promotionBoardList.do">사업공지</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/prom/findPromotionYearList.do">세부사업</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/prom/findPromotionYearList.do">세부사업</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=44">사업자료실</a></li>
+				
+				</ul>
+			</li>
+			
+			<li class="tm_m_li">
+			
+				<div class="tm_m_list">정보•자료</div>
+			
+				<ul class="tm_m_2depth">
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/rsch/findPolicyList.do">연구·통계</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/rsch/findPolicyList.do">정책연구</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=2">산업통계</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/rsch/findPublishList.do?flag=1">발간자료</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/infm/introBoxOffice.do">영화정보자료</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/infm/introBoxOffice.do">박스오피스</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/infm/introData.do">영화DB검색</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/infm/introFims.do">영화정보통합관리창구</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=3">영화제작현황</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=381">블랙리스트특별위원회 자료실</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=441">포스트코로나영화정책추진단</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="https://mlib.kofic.or.kr/main.do?action=main">KOFIC 자료실</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=402">역대 사업</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=402">코로나19 특별지원사업(운영종료) </a></li>
+					
+						</ul>
+					</div>
+				
+				</ul>
+			</li>
+			
+			<li class="tm_m_li">
+			
+				<div class="tm_m_list">열린경영</div>
+			
+				<ul class="tm_m_2depth">
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/cust/introInfos.do">정보공개</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/introInfos.do">정보공개</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/introInfoGuide.do">사전정보공표</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/findBusinessReal.do">사업실명제</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=15">정보목록</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/cust/findPublicData.do">공공데이터개방</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=85">경영공시</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introMngComb.do">통합공시</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introMngSelf_16.do">자체공시</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/omng/introCustCharter.do">고객헌장</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introCustCharter.do">KOFIC고객헌장</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introCustCharterStand.do">서비스이행표준</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/omng/introEthics.do">윤리경영</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introEthics.do">윤리경영소개</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introEthics_01.do">윤리규범</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introEthicsAction.do">윤리경영추진활동</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/ifs/ifsImpDayList.do">재정 정보공개</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/ifs/ifsImpDayList.do">기금 운용상황</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/ifs/ifsOwnImpDayList.do">자체 운용상황</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/omng/introSocial.do">사회공헌</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/omng/introHrBusi.do?flag=1">인권경영</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introHrBusi.do?flag=0">인권경영 추진체계</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introHrBusi.do?flag=1">인권경영선언</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/omng/introHrBusi.do?flag=2">인권경영 이행지침</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/board/selectBoardList.do?boardNumber=362">인권경영 자료실</a></li>
+					
+						</ul>
+					</div>
+				
+				</ul>
+			</li>
+			
+			<li class="tm_m_li">
+			
+				<div class="tm_m_list">KOFIC소개</div>
+			
+				<ul class="tm_m_2depth">
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/introKofic_01.do">일반현황</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introKofic_01.do">설립목적</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introKofic_02.do">미션과비전</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introCoreVal.do">핵심가치</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introKofic_05.do">연혁</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/findRuleList.do">정관 및 제규정</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/introLeader.do">위원장소개</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introLeader.do">위원장 인사말</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introLeaderHis.do">역대위원장</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/findCommiteeInfoList.do">위원회운영</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/findCommiteeInfoList.do">위원 및 감사</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/findConferenceInfoList.do">회의개최 및 결과</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/findConferenceResultList.do">연도별안건결과</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introCommitOrg.do">위원회구성</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/introOrg.do">조직안내</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/introRecurit.do">채용안내</a></li>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/introCI.do">사이버홍보실</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introCI.do">CI소개</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introPamplet.do">팜플렛</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introFilm.do">리더필름</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/intro3D.do">입체영화 관람전 안내영상</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introCharacter.do">캐릭터소개</a></li>
+					
+						</ul>
+					</div>
+				
+					<li class="tm_m_2depth_list"><a href="/kofic/business/intr/introRoad_01.do">시설안내</a></li>
+				
+					<div class="div_tm_m_3depth">
+						<ul class="tm_m_3depth">
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introRoad_01.do">오시는길</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introFacility_01.do">KOFIC 시설안내</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introCARoom.do">표준시사실</a></li>
+					
+							<li class="tm_m_3depth_list"><a href="/kofic/business/intr/introKBGStudio.do">부산기장촬영소</a></li>
+					
+						</ul>
+					</div>
+				
+				</ul>
+			</li>
+			
+			<li class="tm_m_li">
+			
+		</ul>
+	</div>
+</div>
+<!--//MOBILE_MENU-->
+<div id="div_iframe" style="width: 0px; height: 0px;" title="파일다운로드 프레임"></div>
+<script type="text/javascript" src="/kofic/comm/js/2018/slide_js/swiper.min.js"></script>
+	    <!--// header -->
+	    
+	    <!-- SUB_VISUAL -->
+		
+
+
+
+
+ 
+
+<!--
+*
+* @프로그램명 : 컨텐츠 상단 이미지, 네비게이터, 도움말
+* @파일명 : contentNavi.jsp
+* @작성일 : 2012.10.10
+* @작성자 : 김동우
+*
+-->
+
+<!-- 공통 js/css -->
+<script type="text/javascript">
+    $(document).ready(function () {  
+    });
+</script>
+
+
+
+<!-- 컨텐츠 네비게이터 및 도움말 -->
+<div class="titleLoc">
+
+    
+
+<!-- 리뉴얼  상단 비쥬얼 영억 이미지 삭제  -->
+
+<!-- END 리뉴얼  상단 비쥬얼 영억 이미지 삭제  -->
+
+    <!-- </span> -->
+</div>
+<!-- guide -->
+<div class="guideArea">
+
+
+
+
+
+ 
+
+
+
+
+</div>
+<!--// guide -->
+<!-- // 컨텐츠 네비게이터 및 도움말 -->
+
+		<!-- //SUB_VISUAL -->
+		
+		<!--SNB-->
+								
+
+<!--
+*
+* @프로그램명 : 왼쪽화면
+* @파일명 : left.jsp
+* @작성일 : 2012.06.21
+* @작성자 : 김동우A
+*
+-->
+
+<script type="text/javascript">
+
+</script>
+
+        <!--SNB-->
+        <div class="snb">
+            <ul>
+                <li class="snb_home"><a href="/"><img src="/kofic/comm/img/common/icon_snb_home.png" alt="HOME" /></a></li>
+
+                <li class="snb_depth01" id="snb_1_1">
+                    <a href="#">정보•자료</a>
+                     <ul class="snb_depth02" id="snb_1_2">
+
+            <li><a href="/kofic/business/cust/introQnA.do">고객센터</a></li>
+
+            <li><a href="/kofic/business/board/selectBoardList.do?boardNumber=4">알림마당</a></li>
+
+            <li><a href="/kofic/business/prom/introPromotion.do">사업안내</a></li>
+
+            <li><a href="/kofic/business/rsch/findPolicyList.do">정보•자료</a></li>
+
+            <li><a href="/kofic/business/cust/introInfos.do">열린경영</a></li>
+
+            <li><a href="/kofic/business/intr/introKofic_01.do">KOFIC소개</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="snb_depth01"  id="snb_2_1">
+                    <a href="#">연구·통계</a>
+                     <ul class="snb_depth02"  id="snb_2_2">
+        		
+                        <li><a href="/kofic/business/rsch/findPolicyList.do">연구·통계</a></li>
+        		
+                        <li><a href="/kofic/business/infm/introBoxOffice.do">영화정보자료</a></li>
+        		
+                        <li><a href="/kofic/business/board/selectBoardList.do?boardNumber=402">역대 사업</a></li>
+
+                    </ul>
+                </li>
+
+                <li class="snb_depth01" id="snb_3_1">
+
+
+
+                    <a href="#">정책연구</a>
+                     <ul class="snb_depth02" id="snb_3_2">
+
+                        <li><a href="/kofic/business/rsch/findPolicyList.do">정책연구</a></li>
+
+                        <li><a href="/kofic/business/board/selectBoardList.do?boardNumber=2">산업통계</a></li>
+
+                        <li><a href="/kofic/business/rsch/findPublishList.do?flag=1">발간자료</a></li>
+
+                    </ul>
+                </li>
+                
+
+                           
+
+    
+            </ul>
+        </div>
+        <!--//SNB-->
+
+
+        <!--//SNB-->
+        
+        <!--SUB_CONTENTS-->
+		<div class="sub_contents_wrap">
+
+			<!--타이틀영역-->
+			<div class="sub_title_wrap">
+				<h3 class="sub_title">정책연구</h3>
+				<div class="sub_title_line"></div>
+			</div>
+			<!--//타이틀영역-->
+
+			<!--내용영역-->
+			<form id="form_detailBoard" name="form_detailBoard" method="post">
+                <input type="hidden" id="boardNumber" name="boardNumber" value="39" />
+                <input type="hidden" id="policyNo" name="policyNo" value="9166" />
+                <input type="hidden" id="categoryList" name="categoryList" value="10131001" />
+                <input type="hidden" id="categoryId" name="categoryId" value="10131001" />
+                <input type="hidden" id="title" name="title" value="[KOFIC 연구 2026-07] 이주배경인구의 영화관람문화 확산 방안 기초연구" />
+                <input type="hidden" id="rptNo" name="rptNo" value="KOFIC 연구 2026-07" />
+                <input type="hidden" id="author" name="author" value="양경은 남일성 조영민 조성민 이령" />
+                <input type="hidden" id="pubDt" name="pubDt" value="20261026" />
+                <input type="hidden" id="pageCnt" name="pageCnt" value="190" />
+                <input type="hidden" id="isbn" name="isbn" value="978-89-8021-296-5" />
+                <input type="hidden" id="lblContents" name="lblContents" value="&lt;p&gt;o 이주배경인구의 비중은 늘고 있으나 이들의 극장 방문이 취향의 문제가 아닌 조건의 문제라면, 이를 개선하는 것은 문화정책의 필요성인 동시에 영화관람문화 확산을 위한 과제이다.&lt;br&gt;&amp;nbsp;&lt;/p&gt;&lt;p&gt;o 본 연구는 이주배경인구의 영화관람 행태를 결정하는 조건, 그 경험의 사회적 가치, 그리고 정책적 개입 지점을 탐색하는 기초연구이다&lt;/p&gt;" />
+                <input type="hidden" id="idxContents" name="idxContents" value="요약문&lt;br/&gt;제1장 서론&lt;br/&gt;제2장 이주배경인구와 영화관람&lt;br/&gt;제3장 연구방법&lt;br/&gt;제4장 분석 결과&lt;br/&gt;제5장 해외 정책 사례&lt;br/&gt;제6장 정책제언&lt;br/&gt;제7장 결론&lt;br/&gt;참고문헌&lt;br/&gt;부록" />
+                <input type="hidden" id="hitCnt" name="hitCnt" value="126" />
+                <input type="hidden" id="useYn" name="useYn" value="Y" />
+                <input type="hidden" id="insNm" name="insNm" value="정책개발팀 조성민 (051-720-4752)" />
+                <input type="hidden" id="insId" name="insId" value="gadget" />
+                <input type="hidden" id="insDt" name="insDt" value="2026.10.26" />
+                <input type="hidden" id="updId" name="updId" value="gadget" />
+                <input type="hidden" id="koglOpen" name="koglOpen" value="Y" />
+                <input type="hidden" id="koglB" name="koglB" value="N" />
+                <input type="hidden" id="koglM" name="koglM" value="N" />
+                <input type="hidden" id="curPage" name="curPage" value="1" />
+				<input type="hidden" id="searchTitle" name="searchTitle" value="" />
+				<input type="hidden" id="searchContent" name="searchContent" value="" />
+				<div class="sub_contents" id="content">
+					
+				
+					
+					
+					
+					<!--게시판 읽기-->
+					<table class="bbs_vtype" summary="글 내용표시" border="1">
+					<caption>정책연구 상세 내용</caption>
+						<colgroup>
+							<col style="width:10%" />
+							<col style="width:50%" />
+							<col style="width:10%" />
+							<col style="width:10%" />
+							<col style="width:10%" />
+							<col style="width:10%" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<td colspan="6" class="subject">
+									<span>연구보고서</span>
+									[KOFIC 연구 2026-07] 이주배경인구의 영화관람문화 확산 방안 기초연구
+								</td>
+							</tr>
+							<tr>
+							<td colspan="6" class="bbs_view_cover">
+							<dl class="bbs_view">
+								<dt>작성자</dt>
+								<dd>정책개발팀 조성민 (051-720-4752)</dd>
+								<dt>작성일자</dt>
+								<dd class="quarter">2026.10.26</dd>
+								<dt>조회수</dt>
+								<dd class="quarter">126</dd>
+								
+							        
+									<dt class="bt_none">첨부파일</dt> 
+			
+									<dd class="full file_download bt_none">
+										
+		                        
+	                              	<a href="#none" onclick="javascript:fn_fileDownload('/kofic/uploadFile/attachFile/202610' ,'fc9964b1a32c4e519af8d918294031a6.pdf' , '[KOFIC 연구 2026-07] 이주배경인구의_영화관람문화_확산_방안_기초연구_(최종).pdf');" >[KOFIC 연구 2026-07] 이주배경인구의_영화관람문화_확산_방안_기초연구_(최종).pdf</a>
+	                                
+	                          
+				            
+										</dd>
+											
+		   				 
+		   				 </dl>
+		   				 </td>
+		   				 </tr>
+		    
+							<tr>
+								<td colspan="6" >
+									<table class="bbs_vtype mt20" style="border:0">
+										<caption>보고서 번호, 저자, 발간일, 페이지 수 , ISBN이 담긴 표</caption>
+										<colgroup>
+											<col style="width:10%" />
+											<col style="width:10%" />
+											<col style="width:*" />
+										</colgroup>
+										<tbody>
+											<tr>
+												<td rowspan="6" style="border-bottom:0">
+													
+			                    					<img src="/kofic/comm/images/common/no_image_106_131.gif" style="height:131px;width:106px" alt="[KOFIC 연구 2026-07] 이주배경인구의 영화관람문화 확산 방안 기초연구" />
+												</td>
+											</tr>
+											<tr>
+					                            <th scope="row">보고서번호</th>
+					                            <td>KOFIC 연구 2026-07</td>
+					                        </tr>
+					                        <tr>
+					                            <th scope="row">저자</th>
+					                            <td>양경은 남일성 조영민 조성민 이령</td>
+					                        </tr>
+					                        <tr>
+					                            <th scope="row">발간일</th>
+					                            <td>20261026</td>
+					                        </tr>
+					                        <tr>
+					                            <th scope="row">페이지수</th>
+					                            <td>190</td>
+					                        </tr>
+					                        <tr>
+					                        	
+					                           		<th style="border-bottom:0" scope="row">ISBN</th>
+					                            	
+					                           <td style="border-bottom:0">978-89-8021-296-5</td>
+					                        </tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="6" class="bbs_view_cover ">
+									<dl class="bbs_view">
+										<dt>목차</dt>
+										<dd class="full">요약문<br/>제1장 서론<br/>제2장 이주배경인구와 영화관람<br/>제3장 연구방법<br/>제4장 분석 결과<br/>제5장 해외 정책 사례<br/>제6장 정책제언<br/>제7장 결론<br/>참고문헌<br/>부록</dd>
+										<dt>내용</dt>
+										<dd class="full ck-content"><p>o 이주배경인구의 비중은 늘고 있으나 이들의 극장 방문이 취향의 문제가 아닌 조건의 문제라면, 이를 개선하는 것은 문화정책의 필요성인 동시에 영화관람문화 확산을 위한 과제이다.<br>&nbsp;</p><p>o 본 연구는 이주배경인구의 영화관람 행태를 결정하는 조건, 그 경험의 사회적 가치, 그리고 정책적 개입 지점을 탐색하는 기초연구이다</p></dd>
+								
+									</dl>
+								</td>
+								</tr>
+						</tbody>
+					</table>
+					<!--//게시판 읽기-->			
+							
+					  <!-- 주소표시 -->
+		            <div id="divGetUrl" style="margin-bottom:10px;width:100%;text-align:right;">
+		                <span style="color:#888;">?boardNumber=39&amp;policyNo=9166</span>
+		            </div>
+		            <!-- 주소표시 -->
+		            
+					<!--EXPLANATION_TEXT-->
+					
+					
+					
+					
+					
+					
+						
+						
+						
+						
+					
+					
+					
+						<div class="speaker_box mt20">
+							
+							<div class="speaker_box_text">
+								
+								<p class="mt10">
+									<img class="kogl-img-small" src="https://www.kogl.or.kr/open/web/images/images_2014/codetype/new_img_opentype04.png" alt="공공누리"/>
+									<a href="/kofic/"> 영화진흥위원회</a>가 제공한 본 저작물은 "
+								
+									<a rel="license" href="http://www.kogl.or.kr/info/licenseType4.do" target="_blank" >
+										공공누리 4유형(출처표시 + 상업적이용금지 + 변경금지)
+									</a>
+									" 조건에 따라 이용할 수 있습니다.
+								</p>
+							</div>
+						</div>
+					
+					
+						<p class="mt10"><img class="kogl-img-small" src="https://www.kogl.or.kr/open/web/images/images_2014/codetype/new_img_opentype10.png" alt="공공누리"/>
+							<a href="/kofic/">영화진흥위원회</a>가 제공한 본 저작물은 "<a rel="license" href="http://www.kogl.or.kr/info/licenseTypeAi.do" target="_blank" >공공누리 AI유형(인공지능 학습용)</a>" 조건에 따라 이용할 수 있습니다."
+						</p>
+						
+					
+					<!--//EXPLANATION_TEXT-->
+					
+					<!--버튼영역-->
+					<div class="btn_area_center">
+						<a href="javascript:fn_goList();" class="btn_black_b"><span>목록</span></a>
+		                
+					</div>
+					<!--//버튼 영역-->
+					
+				</div>
+				
+			</form>
+			<!--//내용영역-->
+			
+		</div>
+		<!--//SUB_CONTENTS-->
+        
+        <!-- footer -->
+		
+
+<!--
+*
+* @프로그램명 : 하단화면
+* @파일명 : copy.jsp
+* @작성일 : 2012.06.21
+* @작성자 : 김동우A
+*
+-->
+<style>
+.force-focus-visible {
+  outline: 2px solid #FF1493 !important;
+  outline-style: dotted !important;
+  outline-offset: 2px !important;
+}
+</style>
+        <!--BANNER-->
+        <div class="banner_area">
+            <div class="inner">
+
+                <div class="banner_wrap">
+                	<div class="swiper-button-next swiper-button-next02" title="이전 슬라이드"></div>
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide"><a href="http://www.mcst.go.kr/main.jsp" target="_blank" title="새창 문화체육관광부 바로가기"><img src="/kofic/comm/img/common/banner_img01.jpg" alt="문화체육관광부" title="문화체육관광부 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="http://www.kmrb.or.kr/main.do" target="_blank" title="새창 영상물등급위원회 바로가기"><img src="/kofic/comm/img/common/banner_img02.jpg" alt="영상물등급위원회" title="영상물등급위원회 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="https://www.koreafilm.or.kr/main" target="_blank" title="새창 한국영상자료원 바로가기"><img src="/kofic/comm/img/common/banner_img03.jpg" alt="한국영상자료원" title="한국영상자료원 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="http://www.alio.go.kr/home.do" target="_blank" title="새창 공공기관 경영정보 공개시스템 바로가기"><img src="/kofic/comm/img/common/banner_img04.jpg" alt="공공기관 경영정보 공개시스템" title="공공기관 경영정보 공개시스템 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="http://www.acrc.go.kr/acrc/index.do" target="_blank" title="새창 국민권익위원회 바로가기"><img src="/kofic/comm/img/common/banner_img05.jpg" alt="국민권익위원회" title="국민권익위원회 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="http://www.alio.go.kr/guideJoin.do" target="_blank" title="새창 경영개선신고센터 바로가기"><img src="/kofic/comm/img/common/banner_img06.jpg" alt="경영개선신고센터" title="경엉개선신고센터 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="http://www.culture.go.kr/wday/index.do" target="_blank" title="새창 문화가있는날 바로가기"><img src="/kofic/comm/img/common/banner_img07.jpg" alt="문화가있는날" title="문화가있는날 바로가기" /></a></div>
+                        <div class="swiper-slide"><a href="http://www.culture.go.kr/index.do" target="_blank" title="새창 문화포털 바로가기"><img src="/kofic/comm/img/common/banner_img08.jpg" alt="문화포털" title="문화포털 바로가기" /></a></div>
+
+                    </div>
+                    <div class="swiper-button-prev swiper-button-prev02" title="다음 슬라이드"></div>
+                </div>
+
+            </div>
+        </div>
+        <!--//BANNER-->
+
+        <!--FOOTER-->
+		<div class="footer_area">
+			<div class="inner">
+		
+				<div class="footer_left">
+					<div class="footer_logo">
+						<h1 class="top_logo">
+							<a href="/kofic">
+								<img src="/kofic/comm/img/common/footer_logo.webp" alt="영화진흥위원회" />
+							</a>
+						</h1>
+					</div>
+		
+					<div class="copyright">
+						대표전화 : 051-720-4700 (월~금 09:00~18:00, 주말/공휴일 제외)<br />
+						우) 48058 부산광역시 해운대구 수영강변대로 130(우동)
+					</div>
+				</div>
+		
+		
+				<div class="footer_con">
+					<div>
+						<ul class="fnb">
+							<li>
+								<a href="/kofic/business/guid/introGuide.do">이용안내</a>
+							</li>
+							<li> │ </li>
+							<li>
+								<a href="/kofic/business/cust/introQnA.do">묻고답하기</a>
+							</li>
+							<li> │ </li>
+							<li>
+								<a href="/kofic/business/intr/introRoad_01.do">찾아오시는길</a>
+							</li>
+						</ul>
+					</div>
+		
+					<div class="btn_familysite">
+						<button class="btn_familysite_title btn">패밀리사이트</button>
+		
+						<div class="btn_familysite_menu">
+							<ul>
+								<li>
+									<a href="http://www.kafa.ac/main.do"
+									   target="_blank"
+									   title="새창 한국영화 아카데미 바로가기">
+										한국영화아카데미
+									</a>
+								</li>
+		
+								<li>
+									<a href="http://www.kobis.or.kr/kobis/business/main/main.do"
+									   target="_blank"
+									   title="새창 KOBIS 바로가기">
+										KOBIS(영화관입장권통합전산망)
+									</a>
+								</li>
+		
+								<li>
+									<a href="http://www.kobiz.or.kr/new/kor/main/main.jsp"
+									   target="_blank"
+									   title="새창 KOBIZ 바로가기">
+										KoBiz(한국영화 해외진출 플랫폼)
+									</a>
+								</li>
+		
+								<li>
+									<a href="https://enap.or.kr"
+									   target="_blank"
+									   title="새창 영사국가기술자격검정 바로가기">
+										영사국가기술자격검정
+									</a>
+								</li>
+		
+								<li>
+									<a href="https://www.indieground.kr"
+									   target="_blank"
+									   title="새창 인디그라운드 독립예술영화유통배급센터 바로가기">
+										인디그라운드 독립예술영화유통배급센터
+									</a>
+								</li>
+		
+								<li>
+									<a href="https://www.scene1.or.kr/"
+									   target="_blank"
+									   class="last_tab"
+									   title="새창 S#1 바로가기">
+										S#1 (기획개발센터)
+									</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+		
+				</div>
+		
+			</div>
+		
+		
+			<div class="scroll_func">
+				<a id="backtoTop"
+				   href="#"
+				   class="go_Highest"
+				   title="페이지 상단으로 이동">
+					<img src="/kofic/comm/img/common/btn_top_arrow.png" alt="상단으로" />
+				</a>
+			</div>
+		</div>
+		<!--//FOOTER-->
+		
+		
+		<!--FNB-->
+		<div class="fnb_area">
+			<div class="inner">
+		
+				<div class="fnb_bottom_left">
+		
+					<ul class="fnb">
+						<li>
+							<a href="/kofic/business/guid/introPersonInfo.do">
+								<span class="fnb_privacy_txt">개인정보처리방침</span>
+							</a>
+						</li>
+		
+						
+		
+						
+					</ul>
+		
+					<div class="footer_copyright">
+						COPYRIGHTS (C) 2024 BY KOFIC. ALL RIGHTS RESERVED.
+					</div>
+		
+				</div>
+		
+		
+				<div class="fnb_con">
+					<div>
+						<a href="http://www.kogl.or.kr/index.do"
+						   target="_blank"
+						   title="새창 공공누리 바로가기">
+							<img src="/kofic/comm/img/common/img_open.jpg"
+								 alt="공공누리 바로가기" />
+						</a>
+					</div>
+				</div>
+		
+			</div>
+		</div>
+		<!--//FNB-->
+<script type="text/javascript" src="/kofic/comm/js/2018/slide_js/swiper.min.js"></script>
+
+<script type="text/javascript">
+     
+    //영화관입장권통합전산망
+
+
+            //영화관입장권통합전산망END
+    //FAMILY
+    /* var swiper = new Swiper('.famaily_box', {
+        spaceBetween: 30,
+        loop: true,
+        autoplay: 2500,
+        autoplayDisableOnInteraction: false,
+        slidesPerView: 'auto',
+        centeredSlides: true
+    }); */
+    function enableTabFocusSwiper(swiper) {
+    	  var focusableSelector = 'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    	  for (var i = 0; i < swiper.slides.length; i++) {
+    	    (function(idx) {
+    	      var innerEls = swiper.slides[idx].querySelectorAll(focusableSelector);
+
+    	      for (var j = 0; j < innerEls.length; j++) {
+    	        var el = innerEls[j];
+
+    	        el.addEventListener('focus', function(e) {
+    	          var slide = e.target.closest('.swiper-slide');
+    	          if (!slide) return;
+
+    	          var isDuplicate = slide.classList.contains('swiper-slide-duplicate');
+    	          var realIdx = Number(slide.getAttribute('data-swiper-slide-index'));
+
+    	          swiper.slideToLoop(realIdx, 0);
+
+    	          setTimeout(function() {
+
+    	            var allEls = swiper.el.querySelectorAll(focusableSelector);
+    	            for (var k = 0; k < allEls.length; k++) {
+    	              allEls[k].classList.remove("force-focus-visible");
+    	            }
+
+    	            e.target.focus({ preventScroll: true });
+    	            e.target.classList.add("force-focus-visible");
+    	          }, 100);
+    	        });
+
+    	        el.addEventListener('blur', function(e) {
+    	          e.target.classList.remove("force-focus-visible");
+    	        });
+    	      }
+    	    })(i);
+    	  }
+
+    	  swiper.on('slideChangeTransitionEnd', function() {
+    	    var allEls = swiper.el.querySelectorAll(focusableSelector);
+    	    for (var k = 0; k < allEls.length; k++) {
+    	      allEls[k].classList.remove("force-focus-visible");
+    	    }
+    	  });
+    	}
+
+    //BANNER
+    const footBanner = new Swiper('.banner_wrap', {
+    		cssMode: false,  
+    		paginationClickable: true,
+        navigation: {
+            nextEl: ".swiper-button-next02",
+            prevEl: ".swiper-button-prev02",
+        },
+        a11y: {
+            prevSlideMessage: 'Next slide',   // aria-label 변경
+            nextSlideMessage: 'Previous slide',
+          },
+        nested: true,
+        freeMode: false,
+        spaceBetween: 15,
+        loop: true,
+        autoplay: false,//20231222 김태윤 패밀리사이트 슬라이드 드래그 미끄러짐 방지
+       	//autoplayDisableOnInteraction: false,
+        slidesPerView:"auto",
+        //centeredSlides: false
+        touchRatio: 0.000000000000001,//20231222 김태윤 패밀리사이트 슬라이드 드래그 미끄러짐 방지
+        on: {
+        	 init: function () {
+             updateA11y(this);
+             enableTabFocusSwiper(this);
+             },
+             slideChangeTransitionEnd: function () {
+                 updateA11y(this);
+             }
+          },
+        
+    });
+    
+    function updateA11y(swiper) {
+    	  var slides = swiper.slides;
+
+    	  for (var i = 0; i < slides.length; i++) {
+    	    var slide = slides[i];
+
+    	    if (slide.classList.contains('swiper-slide-duplicate')) {
+
+    	      slide.setAttribute('tabindex', '-1');
+    	      slide.setAttribute('aria-hidden', 'true');
+
+    	      var dupEls = slide.querySelectorAll('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    	      for (var j = 0; j < dupEls.length; j++) {
+    	        dupEls[j].setAttribute('tabindex', '-1');
+    	      }
+
+    	    } else {
+
+    	      var origEls = slide.querySelectorAll('a, button, input, select, textarea');
+    	      for (var k = 0; k < origEls.length; k++) {
+    	        origEls[k].setAttribute('tabindex', '0');
+    	      }
+    	    }
+    	  }
+    	}
+
+	$(function(){
+		   $(window).scroll(function () {
+		        if ($(this).scrollTop() > 400) {
+		              $('#backtoTop').fadeIn();
+		         } else {
+		              $('#backtoTop').fadeOut();
+		         }
+		});
+	});
+	$('#backtoTop').click(function(){
+		$('html, body').animate({scrollTop:0},400);
+	return false;
+	});
+</script>
+
+	    <!-- //footer -->
+        
+    </div>
+</body>
+</html>
+
+
+

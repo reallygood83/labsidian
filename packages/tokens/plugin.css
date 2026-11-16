@@ -1,0 +1,49 @@
+/* Generated from packages/tokens/tokens.json.
+   Accent fallback is the brand indigo #5B5BD6 / #8B8DF5. Obsidian's --interactive-accent wins when set.
+   Other surfaces follow the default theme's --color-base-* and status palette. */
+.labsidian {
+  --lab-accent: var(--interactive-accent, #5B5BD6);
+  --lab-accent-hover: var(--interactive-accent-hover, #4A4AC4);
+  --lab-on-accent: var(--text-on-accent, #ffffff);
+  --lab-bg: var(--background-primary, #ffffff);
+  --lab-bg-subtle: var(--background-secondary, #f6f6f6);
+  --lab-bg-hover: var(--background-modifier-hover, #eeeeee);
+  --lab-border: var(--background-modifier-border, #e0e0e0);
+  --lab-text: var(--text-normal, #222222);
+  --lab-text-muted: var(--text-muted, #5c5c5c);
+  --lab-text-faint: var(--text-faint, #ababab);
+  --lab-success: var(--color-green, #08b94e);
+  --lab-warning: var(--color-yellow, #e0ac00);
+  --lab-danger: var(--color-red, #e93147);
+  --lab-info: var(--color-blue, #086ddd);
+  --lab-source-kofic: var(--color-blue, #086ddd);
+  --lab-source-kocca: var(--color-orange, #ec7500);
+  --lab-source-kci: var(--color-cyan, #00bfbc);
+  --lab-source-openalex: var(--color-pink, #d53984);
+  --lab-source-riss: var(--color-green, #08b94e);
+  --lab-source-custom: var(--color-purple, #7852ee);
+  --lab-font-sans: var(--font-interface, 'Pretendard Variable', Pretendard, Inter, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif);
+  --lab-font-mono: var(--font-monospace, 'JetBrains Mono', ui-monospace, Consolas, monospace);
+  --lab-size-xs: 12px;
+  --lab-size-sm: 13px;
+  --lab-size-md: 14px;
+  --lab-size-lg: 16px;
+  --lab-size-xl: 20px;
+  --lab-size-2xl: 28px;
+  --lab-weight-regular: 400;
+  --lab-weight-medium: 500;
+  --lab-weight-semibold: 600;
+  --lab-space-1: 4px;
+  --lab-space-2: 8px;
+  --lab-space-3: 12px;
+  --lab-space-4: 16px;
+  --lab-space-5: 20px;
+  --lab-space-6: 24px;
+  --lab-space-8: 32px;
+  --lab-space-12: 48px;
+  --lab-radius-s: var(--radius-s, 4px);
+  --lab-radius-m: var(--radius-m, 8px);
+  --lab-radius-l: var(--radius-l, 12px);
+  --lab-radius-pill: 999px;
+  --lab-shadow-modal: 0 16px 48px rgba(15,15,30,.18), 0 2px 6px rgba(15,15,30,.08);
+}
