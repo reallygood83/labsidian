@@ -95,4 +95,27 @@ describe("firestore permission messages", () => {
     expect(calls.some((call) => call.startsWith("PATCH") && call.includes("/teams/keptteam1"))).toBe(true);
     expect(calls.some((call) => call.includes("/members?"))).toBe(false);
   });
+
+  it("does not turn a personal library into a team when creating an invite", async () => {
+    const calls: string[] = [];
+    const http: HttpClient = {
+      async request(input) {
+        calls.push(`${input.method ?? "GET"} ${input.url}`);
+        if (input.url.includes("/config?documentId=library")) return { status: 409, headers: {}, text: "{}", bytes: new Uint8Array() };
+        if (input.url.endsWith("/config/library")) {
+          return {
+            status: 200,
+            headers: {},
+            text: JSON.stringify({ fields: { adminUid: { stringValue: "user1" }, teamId: { stringValue: "user1" }, mode: { stringValue: "personal" } } }),
+            bytes: new Uint8Array(),
+          };
+        }
+        return { status: 500, headers: {}, text: "{}", bytes: new Uint8Array() };
+      },
+    };
+    const token = jwt({ email_verified: true, user_id: "user1" });
+    await expect(ensureTeamLibrary(http, "proj", token, "user1", "김연구", "CODE", { teamId: "", salt: "" })).rejects.toThrow("팀 서고로 옮기기");
+    expect(calls.some((call) => call.startsWith("PATCH"))).toBe(false);
+    expect(calls.some((call) => call.includes("/teams?"))).toBe(false);
+  });
 });

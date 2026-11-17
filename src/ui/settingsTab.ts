@@ -343,7 +343,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    const nameLocked = Boolean(this.plugin.settings.teamId) && this.plugin.settings.libraryMode !== "personal";
+    const nameLocked = this.plugin.settings.libraryMode === "team" && Boolean(this.plugin.settings.teamId);
     new Setting(group).setName("표시 이름").setDesc(nameLocked ? "가입한 뒤에는 바꿀 수 없어요. 글에는 가입할 때 정한 이름이 올라가요." : "1자에서 80자예요. 메일 주소는 쓰지 않아요.").addText((text) => {
       text.setValue(this.plugin.settings.displayName).setDisabled(nameLocked).onChange(async (value) => {
         if (nameLocked) return;
@@ -356,7 +356,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
       cls: "lab-note",
       text: logged ? t("settings.loggedIn", { email: this.plugin.settings.firebaseEmail || "팀원" }) : t("settings.loggedOut"),
     });
-    if (logged && this.plugin.settings.firebaseProjectId && this.plugin.settings.firebaseApiKey) {
+    if (logged && this.plugin.settings.libraryMode === "team" && this.plugin.settings.firebaseProjectId && this.plugin.settings.firebaseApiKey) {
       this.inviteTools(group);
     }
     new Setting(group).setName(t("settings.briefingUrl")).addText((text) => {

@@ -79,17 +79,13 @@ export async function ensureTeamLibrary(
   existing: { teamId: string; salt: string },
 ): Promise<{ teamId: string; salt: string }> {
   const library = await createLibrary(http, projectId, idToken, existing.teamId || generateTeamId(), uid, "team");
-  let teamId = library.teamId;
-  let salt = existing.salt || generateCodeSalt();
   if (library.mode === "personal") {
-    teamId = generateTeamId();
-    salt = generateCodeSalt();
-    await createTeam(http, projectId, idToken, teamId, uid, code, salt);
-    await updateLibrary(http, projectId, idToken, teamId, "team");
-  } else {
-    const created = await createTeam(http, projectId, idToken, teamId, uid, code, salt);
-    if (created === "exists" || existing.teamId) salt = await updateTeamCode(http, projectId, idToken, teamId, code);
+    throw new LabsidianError("먼저 「팀 서고로 옮기기」를 해 주세요.");
   }
+  const teamId = library.teamId;
+  let salt = existing.salt || generateCodeSalt();
+  const created = await createTeam(http, projectId, idToken, teamId, uid, code, salt);
+  if (created === "exists" || existing.teamId) salt = await updateTeamCode(http, projectId, idToken, teamId, code);
   if (!await memberExists(http, projectId, idToken, teamId, uid)) {
     await joinTeam(http, projectId, idToken, teamId, uid, displayName, code, salt);
   }

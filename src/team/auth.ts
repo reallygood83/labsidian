@@ -148,8 +148,7 @@ export function parseFirebaseWebConfig(text: string): { projectId: string; apiKe
 }
 
 function looseConfigObject(text: string): string {
-  const withoutBlock = text.replace(/\/\*[\s\S]*?\*\//g, "");
-  const withoutLine = withoutBlock.replace(/^\s*\/\/.*$/gm, "");
+  const withoutLine = stripComments(text);
   const marker = withoutLine.search(/(?:const|let|var)\s+firebaseConfig\s*=/);
   const region = marker >= 0 ? withoutLine.slice(marker) : withoutLine;
   const brace = region.indexOf("{");
@@ -160,6 +159,43 @@ function looseConfigObject(text: string): string {
   body = body.replace(/'([^'\\]*)'/g, (_match, value: string) => `"${value.replace(/"/g, '\\"')}"`);
   body = body.replace(/,(\s*[}\]])/g, "$1");
   return body;
+}
+
+function stripComments(text: string): string {
+  let out = "";
+  let quote: "\"" | "'" | null = null;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index] ?? "";
+    const next = text[index + 1] ?? "";
+    if (quote) {
+      out += char;
+      if (char === "\\" && next) {
+        out += next;
+        index += 1;
+        continue;
+      }
+      if (char === quote) quote = null;
+      continue;
+    }
+    if (char === "\"" || char === "'") {
+      quote = char;
+      out += char;
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      while (index < text.length && text[index] !== "\n") index += 1;
+      if (text[index] === "\n") out += "\n";
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      index += 2;
+      while (index < text.length && !(text[index] === "*" && text[index + 1] === "/")) index += 1;
+      index += 1;
+      continue;
+    }
+    out += char;
+  }
+  return out;
 }
 
 function balancedObject(text: string): string {

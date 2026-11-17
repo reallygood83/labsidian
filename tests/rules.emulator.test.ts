@@ -62,6 +62,13 @@ describe("personal library rules", () => {
     await assertFails(setDoc(doc(other.firestore(), "research_notes/stolen"), note({ owner_uid: otherId, display_name: "외부" })));
   });
 
+  it("stops reading personal notes if the library is switched to a team before the notes move", async () => {
+    const owner = await personalLibrary();
+    await assertSucceeds(getDoc(doc(owner.firestore(), "research_notes/private")));
+    await assertSucceeds(updateDoc(doc(owner.firestore(), "config/library"), { mode: "team", teamId }));
+    await assertFails(getDoc(doc(owner.firestore(), "research_notes/private")));
+  });
+
   it("rejects a signed-in account that has not verified its email", async () => {
     await personalLibrary();
     const unverified = user(ownerId, "owner@example.com", false);

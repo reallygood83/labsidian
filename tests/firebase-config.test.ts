@@ -26,6 +26,15 @@ describe("firebase web config", () => {
     expect(parsed).toEqual({ apiKey: "abc", projectId: "my-project" });
   });
 
+  it("keeps end-of-line comments out and leaves // inside strings", () => {
+    const parsed = parseFirebaseWebConfig(`const firebaseConfig = {
+      apiKey: "x", // key
+      authDomain: "https://my-project.firebaseapp.com",
+      projectId: "my-project",
+    };`);
+    expect(parsed).toEqual({ apiKey: "x", projectId: "my-project" });
+  });
+
   it("reads JSON and single-quoted keys", () => {
     expect(parseFirebaseWebConfig('{"apiKey":"abc","projectId":"my-project"}')).toEqual({ apiKey: "abc", projectId: "my-project" });
     expect(parseFirebaseWebConfig("{ apiKey: 'abc', projectId: 'my-project', }")).toEqual({ apiKey: "abc", projectId: "my-project" });
