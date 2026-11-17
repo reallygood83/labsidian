@@ -23,6 +23,10 @@ const optional = [
 const CMAP_BLOCK =
   /try \{\r?\n {2}const _require = createRequire\(import\.meta\.url\);\r?\n {2}const pkgDir = dirname\(_require\.resolve\("pdfjs-dist\/package\.json"\)\);\r?\n {2}pdfjsAssets\.cMapUrl = join\(pkgDir, "cmaps"\) \+ "\/";\r?\n {2}pdfjsAssets\.cMapPacked = true;\r?\n {2}pdfjsAssets\.standardFontDataUrl = join\(pkgDir, "standard_fonts"\) \+ "\/";\r?\n\} catch \{\r?\n\}/;
 
+const CFB_REQUIRE = /\brequire\d*\("cfb"\)/;
+const CFB_REQUIRE_ALL = /\brequire\d*\("cfb"\)/g;
+const CFB_IMPORT = `import * as __labsidianCfbNs from "cfb";\nconst __labsidianCfb = __labsidianCfbNs.default ?? __labsidianCfbNs;`;
+
 async function assetModule() {
   const root = path.join(process.cwd(), "node_modules", "pdfjs-dist");
   const cmaps = await loadDir(path.join(root, "cmaps"), ".bcmap");
@@ -83,8 +87,13 @@ const pdfAssets = {
     build.onResolve({ filter: /^labsidian-pdf-assets$/ }, () => ({ path: "labsidian-pdf-assets", namespace: "labsidian-pdf" }));
     build.onLoad({ filter: /.*/, namespace: "labsidian-pdf" }, async () => ({ contents: await assetModule(), loader: "js", resolveDir: process.cwd() }));
     build.onLoad({ filter: /kordoc[\\/]dist[\\/].*\.js$/ }, async (args) => {
-      const original = await readFile(args.path, "utf8");
-      if (!CMAP_BLOCK.test(original)) return undefined;
+      const raw = await readFile(args.path, "utf8");
+      const hasCfb = CFB_REQUIRE.test(raw);
+      if (!CMAP_BLOCK.test(raw) && !hasCfb) return undefined;
+      // kordoc loads cfb through createRequire(import.meta.url), which esbuild leaves external.
+      // The plugin folder has no node_modules, so swap it for a static import that gets bundled.
+      const original = hasCfb ? `${CFB_IMPORT}\n${raw.replace(CFB_REQUIRE_ALL, "__labsidianCfb")}` : raw;
+      if (!CMAP_BLOCK.test(original)) return { contents: original, loader: "js", resolveDir: path.dirname(args.path) };
       const contents = `import { LabsidianCMapReaderFactory as __labsidianCMapReaderFactory, LabsidianStandardFontDataFactory as __labsidianStandardFontFactory } from "labsidian-pdf-assets";\n${original.replace(
         CMAP_BLOCK,
         `pdfjsAssets.useWorkerFetch = false;
@@ -120,7 +129,7 @@ await esbuild.build({
   plugins: [pdfAssets, stubs],
   define: { "import.meta.url": "__labsidianImportMetaUrl" },
   banner: {
-    js: `const __labsidianImportMetaUrl = require("url").pathToFileURL(__filename).href;`,
+    js: `const __labsidianImportMetaUrl = typeof __filename === "string" ? require("url").pathToFileURL(__filename).href : "file:///labsidian/main.js";`,
   },
   minify: prod,
   legalComments: "none",
