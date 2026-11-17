@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { rulesForAdmin } from "../packages/shared/rulesText";
 import { patchNoteTeamId } from "../src/team/firestore";
 import { savedMove } from "../src/team/movePlan";
-import { chooseDocId, markdownWithDocId } from "../src/note/docId";
+import { chooseDocId, markdownWithDocId, ownedDocId } from "../src/note/docId";
 import type { HttpClient } from "../src/http/types";
 
 describe("moving notes to a team", () => {
@@ -30,6 +30,15 @@ describe("moving notes to a team", () => {
     expect(next).toContain("본문 $$y$$");
     expect(next).not.toContain("owner_email");
     expect(markdownWithDocId(next, "doc-123").match(/doc_id:/g)).toHaveLength(1);
+  });
+
+  it("uses my remote note when the same source id already exists", () => {
+    const id = ownedDocId([
+      { doc_id: "theirs", owner_uid: "colleague", source_id: "kofic-1" },
+      { doc_id: "mine", owner_uid: "me", source_id: "kofic-1" },
+    ], "me", "kofic-1");
+    expect(id).toBe("mine");
+    expect(ownedDocId([{ doc_id: "theirs", owner_uid: "colleague", source_id: "kofic-1" }], "me", "kofic-1")).toBe("");
   });
 
   it("keeps the saved document id unless the remote owner is someone else", () => {

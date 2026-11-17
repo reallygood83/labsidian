@@ -126,10 +126,15 @@ function decodeJwtPart(part: string): string {
 
 export function parseFirebaseWebConfig(text: string): { projectId: string; apiKey: string } {
   let payload: unknown;
+  const trimmed = text.trim().replace(/^\uFEFF/, "");
   try {
-    payload = JSON.parse(text);
+    payload = JSON.parse(trimmed);
   } catch {
-    throw new LabsidianError("JSON 형식이 아니에요. Firebase 콘솔의 웹 앱 설정을 붙여 넣어 보세요.");
+    try {
+      payload = JSON.parse(looseConfigObject(trimmed));
+    } catch {
+      throw new LabsidianError("웹 앱 설정을 읽지 못했어요. Firebase 콘솔의 firebaseConfig를 그대로 붙여 넣어 보세요.");
+    }
   }
   if (!payload || typeof payload !== "object") throw new LabsidianError("설정 객체가 아니에요.");
   const record = payload as Record<string, unknown>;
@@ -140,4 +145,16 @@ export function parseFirebaseWebConfig(text: string): { projectId: string; apiKe
     throw new LabsidianError("서비스 계정 키는 붙이지 마세요. 웹 앱 설정만 사용해요.");
   }
   return { projectId, apiKey };
+}
+
+function looseConfigObject(text: string): string {
+  let body = text.trim();
+  body = body.replace(/^(?:export\s+default\s+|const\s+\w+\s*=\s*|let\s+\w+\s*=\s*|var\s+\w+\s*=\s*)/, "");
+  body = body.replace(/;?\s*$/, "");
+  body = body.replace(/\/\*[\s\S]*?\*\//g, "");
+  body = body.replace(/(^|[^:"'\\])\/\/.*$/gm, "$1");
+  body = body.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":');
+  body = body.replace(/'([^'\\]*)'/g, (_match, value: string) => `"${value.replace(/"/g, '\\"')}"`);
+  body = body.replace(/,(\s*[}\]])/g, "$1");
+  return body;
 }

@@ -318,6 +318,19 @@ describe("team library rules", () => {
     await assertFails(setDoc(doc(owner.firestore(), `teams/movedteam/members/${ownerId}`), { codeHash, displayName: "김연구" }));
   });
 
+  it("rejects a display name that differs from the member document", async () => {
+    const owner = await teamLibrary();
+    await assertFails(setDoc(doc(owner.firestore(), "research_notes/renamed"), note({ team_id: teamId, display_name: "다른이름" })));
+    await assertSucceeds(setDoc(doc(owner.firestore(), "research_notes/same-name"), note({ team_id: teamId, display_name: "김연구" })));
+  });
+
+  it("lets a verified admin create the library after an unverified attempt", async () => {
+    const unverified = user(ownerId, "owner@example.com", false);
+    await assertFails(setDoc(doc(unverified.firestore(), "config/library"), { adminUid: ownerId, teamId, mode: "team" }));
+    const owner = user(ownerId, "owner@example.com");
+    await assertSucceeds(setDoc(doc(owner.firestore(), "config/library"), { adminUid: ownerId, teamId, mode: "team" }));
+  });
+
   it("rejects a different account from creating the library", async () => {
     const other = user(otherId, "other@example.com");
     await assertFails(setDoc(doc(other.firestore(), "config/library"), { adminUid: otherId, teamId: "othrteam", mode: "team" }));

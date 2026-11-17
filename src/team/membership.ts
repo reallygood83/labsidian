@@ -1,4 +1,4 @@
-import { generateCodeSalt, hashTeamCode } from "../../packages/shared/team";
+import { generateCodeSalt, generateTeamId, hashTeamCode } from "../../packages/shared/team";
 import { emailVerifiedFromToken } from "./auth";
 import { LabsidianError } from "../errors";
 import type { HttpClient } from "../http/types";
@@ -20,7 +20,7 @@ export function explainFirestoreStatus(status: number, idToken = ""): string {
   return "팀 서고에 연결하지 못했어요. 인터넷과 Firebase 설정을 확인해 주세요.";
 }
 
-export async function createLibrary(http: HttpClient, projectId: string, idToken: string, teamId: string, adminUid: string, mode: "personal" | "team"): Promise<void> {
+export async function createLibrary(http: HttpClient, projectId: string, idToken: string, teamId: string, adminUid: string, mode: "personal" | "team"): Promise<string> {
   const response = await http.request({
     url: `${root(projectId)}/config?documentId=library`,
     method: "POST",
@@ -41,13 +41,37 @@ export async function createLibrary(http: HttpClient, projectId: string, idToken
     if (existing.status >= 400) {
       throw new LabsidianError("이미 다른 사람이 이 서고를 만들었어요. 그 사람의 초대를 받아 주세요.");
     }
-    const payload = JSON.parse(existing.text) as { fields?: { adminUid?: { stringValue?: string } } };
+    const payload = JSON.parse(existing.text) as { fields?: { adminUid?: { stringValue?: string }; teamId?: { stringValue?: string } } };
     if (payload.fields?.adminUid?.stringValue !== adminUid) {
       throw new LabsidianError("이미 다른 사람이 이 서고를 만들었어요. 그 사람의 초대를 받아 주세요.");
     }
-    return;
+    const stored = payload.fields?.teamId?.stringValue ?? "";
+    if (!stored) throw new LabsidianError("이미 만들어진 서고의 팀 번호를 읽지 못했어요.");
+    return stored;
   }
   if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status, idToken));
+  return teamId;
+}
+
+export async function ensureTeamLibrary(
+  http: HttpClient,
+  projectId: string,
+  idToken: string,
+  uid: string,
+  displayName: string,
+  code: string,
+  existing: { teamId: string; salt: string },
+): Promise<{ teamId: string; salt: string }> {
+  if (!existing.teamId) {
+    const salt = generateCodeSalt();
+    const teamId = await createLibrary(http, projectId, idToken, generateTeamId(), uid, "team");
+    await createTeam(http, projectId, idToken, teamId, uid, code, salt);
+    await joinTeam(http, projectId, idToken, teamId, uid, displayName, code, salt);
+    return { teamId, salt };
+  }
+  const salt = await updateTeamCode(http, projectId, idToken, existing.teamId, code);
+  await joinTeam(http, projectId, idToken, existing.teamId, uid, displayName, code, salt);
+  return { teamId: existing.teamId, salt };
 }
 
 export async function updateLibrary(http: HttpClient, projectId: string, idToken: string, teamId: string, mode: "personal" | "team"): Promise<void> {

@@ -11,6 +11,10 @@ export function markdownWithDocId(markdown: string, docId: string): string {
   return front + markdown.slice(match.index + match[0].length);
 }
 
+export function ownedDocId(notes: readonly { doc_id: string; owner_uid: string; source_id: string }[], uid: string, sourceId: string): string {
+  return notes.find((note) => note.owner_uid === uid && note.source_id === sourceId && note.doc_id)?.doc_id ?? "";
+}
+
 export function chooseDocId(stored: string, ownerUid: string, myUid: string, fresh: string): string {
   if (stored && ownerUid && ownerUid !== myUid) return fresh;
   return stored || fresh;
