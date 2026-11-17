@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "./web.css";
+
+body {
+  margin: 0;
+  background: var(--lab-bg);
+  color: var(--lab-text);
+  font-family: var(--lab-font-sans);
+}
