@@ -13,6 +13,19 @@ describe("firebase web config", () => {
     expect(parsed).toEqual({ apiKey: "abc", projectId: "my-project" });
   });
 
+  it("reads a snippet that includes a comment and an import", () => {
+    const parsed = parseFirebaseWebConfig(`
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "firebase/app";
+      const firebaseConfig = {
+        apiKey: "abc",
+        projectId: "my-project",
+      };
+      const app = initializeApp(firebaseConfig);
+    `);
+    expect(parsed).toEqual({ apiKey: "abc", projectId: "my-project" });
+  });
+
   it("reads JSON and single-quoted keys", () => {
     expect(parseFirebaseWebConfig('{"apiKey":"abc","projectId":"my-project"}')).toEqual({ apiKey: "abc", projectId: "my-project" });
     expect(parseFirebaseWebConfig("{ apiKey: 'abc', projectId: 'my-project', }")).toEqual({ apiKey: "abc", projectId: "my-project" });

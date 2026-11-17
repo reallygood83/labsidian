@@ -59,7 +59,7 @@ describe("firestore permission messages", () => {
           return {
             status: 200,
             headers: {},
-            text: JSON.stringify({ fields: { adminUid: { stringValue: "user1" }, teamId: { stringValue: "keptteam1" } } }),
+            text: JSON.stringify({ fields: { adminUid: { stringValue: "user1" }, teamId: { stringValue: "keptteam1" }, mode: { stringValue: "team" } } }),
             bytes: new Uint8Array(),
           };
         }
@@ -70,5 +70,29 @@ describe("firestore permission messages", () => {
     const ready = await ensureTeamLibrary(http, "proj", token, "user1", "김연구", "CODE", { teamId: "", salt: "" });
     expect(ready.teamId).toBe("keptteam1");
     expect(calls.some((url) => url.includes("/teams?documentId=keptteam1"))).toBe(true);
+  });
+
+  it("updates the code when the team exists and does not rejoin an existing member", async () => {
+    const calls: string[] = [];
+    const http: HttpClient = {
+      async request(input) {
+        calls.push(`${input.method ?? "GET"} ${input.url}`);
+        if (input.url.includes("/config?documentId=library")) return { status: 409, headers: {}, text: "{}", bytes: new Uint8Array() };
+        if (input.url.endsWith("/config/library")) {
+          return { status: 200, headers: {}, text: JSON.stringify({ fields: { adminUid: { stringValue: "user1" }, teamId: { stringValue: "keptteam1" }, mode: { stringValue: "team" } } }), bytes: new Uint8Array() };
+        }
+        if (input.url.includes("/teams?documentId=")) return { status: 409, headers: {}, text: "{}", bytes: new Uint8Array() };
+        if ((input.method ?? "GET") === "GET" && input.url.endsWith("/members/user1")) {
+          return { status: 200, headers: {}, text: JSON.stringify({ fields: { displayName: { stringValue: "김연구" } } }), bytes: new Uint8Array() };
+        }
+        if (input.method === "PATCH") return { status: 200, headers: {}, text: "{}", bytes: new Uint8Array() };
+        return { status: 500, headers: {}, text: "{}", bytes: new Uint8Array() };
+      },
+    };
+    const token = jwt({ email_verified: true, user_id: "user1" });
+    const ready = await ensureTeamLibrary(http, "proj", token, "user1", "김연구", "CODE", { teamId: "", salt: "" });
+    expect(ready.teamId).toBe("keptteam1");
+    expect(calls.some((call) => call.startsWith("PATCH") && call.includes("/teams/keptteam1"))).toBe(true);
+    expect(calls.some((call) => call.includes("/members?"))).toBe(false);
   });
 });

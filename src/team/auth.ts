@@ -148,13 +148,29 @@ export function parseFirebaseWebConfig(text: string): { projectId: string; apiKe
 }
 
 function looseConfigObject(text: string): string {
-  let body = text.trim();
+  const withoutBlock = text.replace(/\/\*[\s\S]*?\*\//g, "");
+  const withoutLine = withoutBlock.replace(/^\s*\/\/.*$/gm, "");
+  const marker = withoutLine.search(/(?:const|let|var)\s+firebaseConfig\s*=/);
+  const region = marker >= 0 ? withoutLine.slice(marker) : withoutLine;
+  const brace = region.indexOf("{");
+  let body = brace >= 0 ? balancedObject(region.slice(brace)) : region.trim();
   body = body.replace(/^(?:export\s+default\s+|const\s+\w+\s*=\s*|let\s+\w+\s*=\s*|var\s+\w+\s*=\s*)/, "");
   body = body.replace(/;?\s*$/, "");
-  body = body.replace(/\/\*[\s\S]*?\*\//g, "");
-  body = body.replace(/(^|[^:"'\\])\/\/.*$/gm, "$1");
   body = body.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":');
   body = body.replace(/'([^'\\]*)'/g, (_match, value: string) => `"${value.replace(/"/g, '\\"')}"`);
   body = body.replace(/,(\s*[}\]])/g, "$1");
   return body;
+}
+
+function balancedObject(text: string): string {
+  let depth = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return text.slice(0, index + 1);
+    }
+  }
+  return text;
 }

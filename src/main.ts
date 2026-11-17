@@ -27,7 +27,7 @@ import { buildInviteLinks, encodePublicConfig, generateCodeSalt, generateTeamCod
 import { JoinModal } from "./ui/joinModal";
 import { InviteConfirmModal } from "./ui/inviteConfirmModal";
 import { TourModal } from "./ui/tourModal";
-import { createLibrary, createTeam, ensureTeamLibrary, joinTeam, listMembers, memberExists, removeMember, updateLibrary, updateTeamCode, type TeamMember } from "./team/membership";
+import { createLibrary, createTeam, ensureTeamLibrary, joinTeam, listMembers, memberExists, myDisplayName, removeMember, updateLibrary, updateTeamCode, type TeamMember } from "./team/membership";
 import { savedMove } from "./team/movePlan";
 import { createNote, notesBySourceId, savedNoteRefs } from "./vault";
 import "./types/obsidian";
@@ -239,11 +239,16 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
     const token = await this.token();
     if (!token || !this.settings.firebaseProjectId) throw new Error("웹 설정을 저장하고 로그인한 뒤에 내 클라우드를 연결할 수 있어요.");
     const uid = userIdFromToken(token);
-    const teamId = await createLibrary(this.http, this.settings.firebaseProjectId, token, uid, uid, "personal");
-    this.settings.libraryMode = "personal";
-    this.settings.teamId = teamId;
-    this.settings.teamName = "내 서고";
+    const library = await createLibrary(this.http, this.settings.firebaseProjectId, token, uid, uid, "personal");
     this.settings.firebaseEnabled = true;
+    this.settings.teamId = library.teamId;
+    if (library.mode === "team") {
+      this.settings.libraryMode = "team";
+      await this.saveSettings();
+      return "이 프로젝트는 이미 팀 서고예요. 팀으로 쓰기로 맞췄어요. 개인으로 바꾸면 팀원 연결이 끊겨요.";
+    }
+    this.settings.libraryMode = "personal";
+    this.settings.teamName = "내 서고";
     await this.saveSettings();
     return "내 클라우드에 연결했어요. 글은 기본적으로 나만 볼 수 있어요.";
   }
@@ -671,9 +676,9 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
   }
 
   private async nameForUpload(token: string, uid: string): Promise<string> {
-    if (this.settings.libraryMode === "team" && this.settings.teamId) {
-      const mine = (await listMembers(this.http, this.settings.firebaseProjectId, token, this.settings.teamId)).find((person) => person.uid === uid);
-      if (mine?.displayName) return mine.displayName.slice(0, 80);
+    if (this.settings.teamId && this.settings.libraryMode !== "personal") {
+      const name = await myDisplayName(this.http, this.settings.firebaseProjectId, token, this.settings.teamId, uid);
+      if (name.trim()) return name.trim().slice(0, 80);
     }
     return this.shownName();
   }

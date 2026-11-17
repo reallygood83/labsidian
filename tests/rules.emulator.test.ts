@@ -318,6 +318,33 @@ describe("team library rules", () => {
     await assertFails(setDoc(doc(owner.firestore(), `teams/movedteam/members/${ownerId}`), { codeHash, displayName: "김연구" }));
   });
 
+  it("lets a member read their own name and write only with that name", async () => {
+    await teamLibrary();
+    const mate = user("mateuser1", "mate@example.com");
+    await assertSucceeds(setDoc(doc(mate.firestore(), `teams/${teamId}/members/mateuser1`), { codeHash, displayName: "동료" }));
+    await assertFails(getDocs(collection(mate.firestore(), `teams/${teamId}/members`)));
+    const self = await getDoc(doc(mate.firestore(), `teams/${teamId}/members/mateuser1`));
+    expect(self.data()?.displayName).toBe("동료");
+    await assertSucceeds(setDoc(doc(mate.firestore(), "research_notes/mate-note"), note({
+      team_id: teamId,
+      owner_uid: "mateuser1",
+      display_name: "동료",
+    })));
+    await assertFails(setDoc(doc(mate.firestore(), "research_notes/mate-renamed"), note({
+      team_id: teamId,
+      owner_uid: "mateuser1",
+      display_name: "다른이름",
+    })));
+  });
+
+  it("keeps the admin membership when a second join is denied and still allows a new code", async () => {
+    const owner = await teamLibrary();
+    await assertFails(setDoc(doc(owner.firestore(), `teams/${teamId}/members/${ownerId}`), { codeHash, displayName: "김연구" }));
+    const member = await getDoc(doc(owner.firestore(), `teams/${teamId}/members/${ownerId}`));
+    expect(member.data()?.displayName).toBe("김연구");
+    await assertSucceeds(updateDoc(doc(owner.firestore(), `teams/${teamId}`), { codeHash: "c".repeat(64), codeSalt: "c".repeat(16) }));
+  });
+
   it("rejects a display name that differs from the member document", async () => {
     const owner = await teamLibrary();
     await assertFails(setDoc(doc(owner.firestore(), "research_notes/renamed"), note({ team_id: teamId, display_name: "다른이름" })));
