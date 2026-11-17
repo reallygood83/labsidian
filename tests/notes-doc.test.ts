@@ -17,5 +17,10 @@ describe("note documents", () => {
     expect(noteFromDoc(doc)?.team_shared).toBe(false);
     expect(noteFromDoc(doc)?.briefing_public).toBe(true);
     expect(fromFirestoreDocument(doc)?.team_shared).toBe(false);
+    const named = fromFirestoreDocument({
+      name: "projects/demo/databases/(default)/documents/research_notes/old-doc",
+      fields: { source_id: { stringValue: "kofic-1" } },
+    });
+    expect(named?.doc_id).toBe("old-doc");
   });
 });

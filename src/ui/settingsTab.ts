@@ -56,8 +56,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
 
   private modeChoice(root: HTMLElement): void {
     const card = root.createDiv({ cls: "lab-card" });
-    const connected = this.plugin.settings.libraryMode !== "solo" && Boolean(this.plugin.settings.firebaseProjectId);
-    card.createEl("p", { cls: "lab-title", text: connected ? "연결됨" : "안 됨" });
+    card.createEl("p", { cls: "lab-title", text: this.modeTitle() });
     card.createEl("p", { cls: "lab-note", text: this.plugin.settings.libraryMode === "team" ? "팀으로 쓰는 중이에요." : this.plugin.settings.libraryMode === "personal" ? "내 클라우드에 혼자 쓰는 중이에요." : "혼자 쓰기예요. 노트는 이 볼트에만 있어요." });
     const row = card.createDiv({ cls: "lab-row" });
     const solo = row.createEl("button", { cls: `lab-btn${this.plugin.settings.libraryMode === "solo" ? " is-primary" : ""}`, text: "혼자 쓰기" });
@@ -115,6 +114,13 @@ export class LabsidianSettingTab extends PluginSettingTab {
         });
       });
     }
+  }
+
+  private modeTitle(): string {
+    const project = Boolean(this.plugin.settings.firebaseProjectId);
+    if (this.plugin.settings.libraryMode === "team") return project ? "팀 서고에 연결됨" : "팀으로 쓰기";
+    if (this.plugin.settings.libraryMode === "personal") return project ? "내 클라우드에 연결됨" : "내 클라우드";
+    return "혼자 쓰기";
   }
 
   private async chooseMode(mode: "solo" | "team"): Promise<void> {
@@ -330,6 +336,18 @@ export class LabsidianSettingTab extends PluginSettingTab {
     const googleButton = group.createEl("button", { cls: "lab-btn", text: t("settings.login") });
     googleButton.addEventListener("click", () => {
       void this.plugin.loginWithGoogle(google).then((message) => new Notice(message));
+    });
+    new Setting(group).setName("팀 이름").addText((text) => {
+      text.setValue(this.plugin.settings.teamName).onChange(async (value) => {
+        this.plugin.settings.teamName = value.trim().slice(0, 80);
+        await this.plugin.saveSettings();
+      });
+    });
+    new Setting(group).setName("표시 이름").addText((text) => {
+      text.setValue(this.plugin.settings.displayName).onChange(async (value) => {
+        this.plugin.settings.displayName = value.trim().slice(0, 80);
+        await this.plugin.saveSettings();
+      });
     });
     const logged = this.plugin.secrets.has(SECRET.firebaseRefresh);
     group.createEl("p", {

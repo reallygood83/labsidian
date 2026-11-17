@@ -65,7 +65,9 @@ export function fromFirestoreDocument(doc: unknown): ResearchNote | null {
     if (!value || !("arrayValue" in value)) return [];
     return (value.arrayValue.values ?? []).map((item) => item.stringValue).filter(Boolean);
   };
-  const docId = str("doc_id");
+  const named = doc as { name?: string };
+  let docId = str("doc_id");
+  if (!docId && named.name) docId = decodeURIComponent(named.name.split("/").pop() ?? "");
   const sourceId = str("source_id");
   if (!docId && !sourceId) return null;
   const warnings = fields.convert_warnings;

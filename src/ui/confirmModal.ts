@@ -1,4 +1,4 @@
-import { Modal, type App } from "obsidian";
+import { Modal, Setting, type App } from "obsidian";
 
 export function askConfirm(app: App, title: string, body: string): Promise<boolean> {
   return new Promise((resolve) => {
@@ -22,7 +22,7 @@ class ConfirmModal extends Modal {
   onOpen(): void {
     this.modalEl.addClass("labsidian");
     const shell = this.contentEl.createDiv({ cls: "lab-upload" });
-    shell.createEl("h3", { text: this.titleText });
+    new Setting(shell).setName(this.titleText).setHeading();
     shell.createEl("p", { text: this.bodyText });
     const footer = shell.createDiv({ cls: "lab-footer" });
     const cancel = footer.createEl("button", { cls: "lab-btn", text: "취소" });

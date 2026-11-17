@@ -1,4 +1,5 @@
 import { generateCodeSalt, hashTeamCode } from "../../packages/shared/team";
+import { emailVerifiedFromToken } from "./auth";
 import { LabsidianError } from "../errors";
 import type { HttpClient } from "../http/types";
 
@@ -10,7 +11,10 @@ function authHeaders(idToken: string): Record<string, string> {
   return { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" };
 }
 
-export function explainFirestoreStatus(status: number): string {
+export function explainFirestoreStatus(status: number, idToken = ""): string {
+  if (status === 403 && idToken && !emailVerifiedFromToken(idToken)) {
+    return "메일 인증이 필요해요. 받은 편지함의 링크를 누른 뒤 다시 로그인해 주세요.";
+  }
   if (status === 403) return "이 팀에 쓸 권한이 없어요. 관리자에게 초대 링크를 다시 받아 주세요.";
   if (status === 401) return "로그인이 만료됐어요. 설정에서 다시 로그인해 주세요.";
   return "팀 서고에 연결하지 못했어요. 인터넷과 Firebase 설정을 확인해 주세요.";
@@ -43,7 +47,7 @@ export async function createLibrary(http: HttpClient, projectId: string, idToken
     }
     return;
   }
-  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
+  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status, idToken));
 }
 
 export async function updateLibrary(http: HttpClient, projectId: string, idToken: string, teamId: string, mode: "personal" | "team"): Promise<void> {
@@ -58,7 +62,7 @@ export async function updateLibrary(http: HttpClient, projectId: string, idToken
       },
     }),
   });
-  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
+  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status, idToken));
 }
 
 export async function createTeam(http: HttpClient, projectId: string, idToken: string, teamId: string, ownerUid: string, code: string, salt: string): Promise<void> {
@@ -76,7 +80,7 @@ export async function createTeam(http: HttpClient, projectId: string, idToken: s
     }),
   });
   if (response.status === 409) return;
-  if (response.status >= 400) throw new LabsidianError(`${explainFirestoreStatus(response.status)} 규칙을 게시했는지 확인해 주세요.`);
+  if (response.status >= 400) throw new LabsidianError(`${explainFirestoreStatus(response.status, idToken)} 규칙을 게시했는지 확인해 주세요.`);
 }
 
 export async function updateTeamCode(http: HttpClient, projectId: string, idToken: string, teamId: string, code: string): Promise<string> {
@@ -93,7 +97,7 @@ export async function updateTeamCode(http: HttpClient, projectId: string, idToke
       },
     }),
   });
-  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status));
+  if (response.status >= 400) throw new LabsidianError(explainFirestoreStatus(response.status, idToken));
   return salt;
 }
 
@@ -111,7 +115,9 @@ export async function joinTeam(http: HttpClient, projectId: string, idToken: str
     }),
   });
   if (response.status === 409) return;
-  if (response.status === 403) throw new LabsidianError("메일 인증이 필요해요. 받은 편지함의 링크를 누른 뒤 다시 로그인해 주세요.");
+  if (response.status === 403 && !emailVerifiedFromToken(idToken)) {
+    throw new LabsidianError("메일 인증이 필요해요. 받은 편지함의 링크를 누른 뒤 다시 로그인해 주세요.");
+  }
   if (response.status >= 400) throw new LabsidianError("팀코드가 맞지 않아요. 관리자에게 새 초대 링크를 받아 주세요.");
 }
 
@@ -127,7 +133,7 @@ export async function memberExists(http: HttpClient, projectId: string, idToken:
   });
   if (response.status === 200) return true;
   if (response.status === 404) return false;
-  throw new LabsidianError(explainFirestoreStatus(response.status));
+  throw new LabsidianError(explainFirestoreStatus(response.status, idToken));
 }
 
 export async function listMembers(http: HttpClient, projectId: string, idToken: string, teamId: string): Promise<TeamMember[]> {
@@ -149,7 +155,7 @@ export async function removeMember(http: HttpClient, projectId: string, idToken:
     method: "DELETE",
     headers: { Authorization: `Bearer ${idToken}` },
   });
-  if (response.status >= 400 && response.status !== 404) throw new LabsidianError(explainFirestoreStatus(response.status));
+  if (response.status >= 400 && response.status !== 404) throw new LabsidianError(explainFirestoreStatus(response.status, idToken));
 }
 
 export { generateCodeSalt };

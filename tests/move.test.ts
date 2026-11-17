@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { rulesForAdmin } from "../packages/shared/rulesText";
 import { patchNoteTeamId } from "../src/team/firestore";
 import { savedMove } from "../src/team/movePlan";
-import { markdownWithDocId } from "../src/note/docId";
+import { chooseDocId, markdownWithDocId } from "../src/note/docId";
 import type { HttpClient } from "../src/http/types";
 
 describe("moving notes to a team", () => {
@@ -23,11 +23,19 @@ describe("moving notes to a team", () => {
     expect(calls[0]?.body).not.toContain("chunk");
   });
 
-  it("writes doc_id into frontmatter and prefers that value", () => {
-    const next = markdownWithDocId("---\nsource_id: \"kofic-1\"\nowner_email: \"a@b.co\"\n---\n\n본문\n", "doc-123");
+  it("writes doc_id into frontmatter and keeps dollar signs in the note", () => {
+    const next = markdownWithDocId("---\ntitle: \"수식 $$x$$\"\nowner_email: \"a@b.co\"\n---\n\n본문 $$y$$\n", "doc-123");
     expect(next).toContain("doc_id: \"doc-123\"");
+    expect(next).toContain("수식 $$x$$");
+    expect(next).toContain("본문 $$y$$");
     expect(next).not.toContain("owner_email");
-    expect(markdownWithDocId(next, "doc-123")).toMatch(/doc_id: "doc-123"/);
+    expect(markdownWithDocId(next, "doc-123").match(/doc_id:/g)).toHaveLength(1);
+  });
+
+  it("keeps the saved document id unless the remote owner is someone else", () => {
+    expect(chooseDocId("old-doc", "me", "me", "new-doc")).toBe("old-doc");
+    expect(chooseDocId("", "", "me", "new-doc")).toBe("new-doc");
+    expect(chooseDocId("their-doc", "colleague", "me", "new-doc")).toBe("new-doc");
   });
 
   it("reuses the saved team when a move runs again", () => {

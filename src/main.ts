@@ -19,7 +19,7 @@ import { SearchModal } from "./ui/searchModal";
 import { UploadModal, type UploadPlan } from "./ui/uploadModal";
 import { askPassword, askPasswordChange } from "./ui/passwordModal";
 import { buildMarkdown } from "./note/build";
-import { markdownWithDocId } from "./note/docId";
+import { chooseDocId } from "./note/docId";
 import { lockResearchNote, noteDocumentId, unlockResearchNote } from "../packages/shared/lock";
 import { rulesForAdmin } from "../packages/shared/rulesText";
 import type { ResearchNote } from "../packages/types/research-note";
@@ -276,8 +276,10 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       throw new Error("팀 멤버로 들어가지 못했어요. 다시 옮겨 주세요.");
     }
     for (const note of notes) {
-      const docId = note.doc_id || await noteDocumentId(note.team_id, note.owner_uid, note.source_id);
+      const docId = note.doc_id || await noteDocumentId(note.team_id, note.owner_uid || uid, note.source_id);
       await patchNoteTeamId(this.http, this.settings.firebaseProjectId, token, docId, teamId);
+      const file = await this.localFileForCloudNote(note, uid, docId);
+      if (file) await this.writeDocId(file, docId);
     }
     await updateLibrary(this.http, this.settings.firebaseProjectId, token, teamId, "team");
     this.settings.libraryMode = "team";
@@ -338,6 +340,11 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       const fresh = await loginForVerification(this.http, this.settings.firebaseApiKey, this.settings.firebaseEmail, password);
       await this.rememberSession(fresh.session.refreshToken, fresh.session.idToken, fresh.session.email || this.settings.firebaseEmail, this.settings.displayName);
       if (!fresh.verified) return VERIFY_EMAIL_MESSAGE;
+      const code = (await this.secrets.get(SECRET.teamCode)) ?? "";
+      if (this.settings.libraryMode === "team" && code && this.settings.teamId && this.settings.codeSalt) {
+        await joinTeam(this.http, this.settings.firebaseProjectId, fresh.session.idToken, this.settings.teamId, fresh.session.localId, this.shownName(), code, this.settings.codeSalt);
+        return `${this.settings.teamName || "팀"} 서고에 들어왔어요.`;
+      }
       return t("settings.loggedIn", { email: fresh.session.email || this.settings.firebaseEmail });
     } catch (error) {
       return error instanceof Error ? `${error.message} ${t("upload.vaultSafe")}` : t("upload.vaultSafe");
@@ -517,11 +524,17 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
           lock_ciphertext: "",
           locked_chunks: [],
         };
-        if (!note.doc_id) note.doc_id = await noteDocumentId(note.team_id, ownerUid, note.source_id);
+        const stored = note.doc_id;
+        let remoteOwner = "";
+        if (stored) {
+          const existing = await getResearchNote(this.http, this.settings.firebaseProjectId, token, stored).catch(() => null);
+          remoteOwner = existing?.owner_uid ?? "";
+        }
+        note.doc_id = chooseDocId(stored, remoteOwner, ownerUid, await noteDocumentId(note.team_id, ownerUid, note.source_id));
         const password = plan.passwords[id];
         if (password) note = await lockResearchNote(note, password, plan.hideTitle);
         await upsertResearchNote(this.http, this.settings.firebaseProjectId, token, note);
-        await this.app.vault.modify(file, markdownWithDocId(raw, note.doc_id));
+        await this.writeDocId(file, note.doc_id);
         count += 1;
       }
       this.settings.lastSyncAt = new Date().toISOString();
@@ -604,12 +617,34 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
   private async remoteIds(): Promise<string[]> {
     const token = await this.token();
     if (!token || !this.settings.firebaseProjectId) return [];
+    const uid = userIdFromToken(token);
     const notes = await listVisibleNotes(this.http, this.settings.firebaseProjectId, token, {
       teamId: this.settings.teamId,
-      ownerUid: userIdFromToken(token),
+      ownerUid: uid,
       personal: this.settings.libraryMode === "personal",
     });
+    for (const note of notes) {
+      const file = await this.localFileForCloudNote(note, uid, note.doc_id);
+      if (file) await this.writeDocId(file, note.doc_id);
+    }
     return notes.map((note) => note.doc_id).filter((id) => id.length > 0);
+  }
+
+  private async localFileForCloudNote(note: ResearchNote, uid: string, docId: string): Promise<TFile | undefined> {
+    if (note.source_id) return notesBySourceId(this.app).get(note.source_id);
+    for (const [sourceId, file] of notesBySourceId(this.app)) {
+      if (await noteDocumentId(note.team_id, note.owner_uid || uid, sourceId) === docId) return file;
+    }
+    return undefined;
+  }
+
+  private async writeDocId(file: TFile, docId: string): Promise<void> {
+    const current = String(this.app.metadataCache.getFileCache(file)?.frontmatter?.doc_id ?? "");
+    if (current === docId) return;
+    await this.app.fileManager.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
+      frontmatter.doc_id = docId;
+      delete frontmatter.owner_email;
+    });
   }
 
   private async token(): Promise<string> {
