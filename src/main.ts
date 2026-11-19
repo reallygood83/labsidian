@@ -83,13 +83,18 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
         return true;
       },
     });
-    this.registerObsidianProtocolHandler("labsidian", (params) => {
-      void this.openShared(params.id ?? "");
-    });
-    this.registerObsidianProtocolHandler("labsidian-join", (params) => {
-      const code = params.t || new URLSearchParams(String(params.hash ?? "").replace(/^#/, "")).get("t") || "";
-      void this.acceptInvite(params.c ?? "", code);
-    });
+    // "labsidian" links come from briefings and invites made before the rename; keep them working.
+    for (const action of ["research-shelf", "labsidian"]) {
+      this.registerObsidianProtocolHandler(action, (params) => {
+        void this.openShared(params.id ?? "");
+      });
+    }
+    for (const action of ["research-shelf-join", "labsidian-join"]) {
+      this.registerObsidianProtocolHandler(action, (params) => {
+        const code = params.t || new URLSearchParams(String(params.hash ?? "").replace(/^#/, "")).get("t") || "";
+        void this.acceptInvite(params.c ?? "", code);
+      });
+    }
     this.addSettingTab(new LabsidianSettingTab(this.app, this));
     this.app.workspace.onLayoutReady(() => {
       if (!this.settings.tourSeen) this.openTour();

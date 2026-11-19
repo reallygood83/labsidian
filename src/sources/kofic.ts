@@ -1,5 +1,5 @@
 import { LabsidianError } from "../errors";
-import { browserHeaders } from "../http/types";
+import { requestHeaders } from "../http/types";
 import { collapseWs, normalizeDate, stripTags, uniqueAuthors } from "../text";
 import { cellTexts, hiddenInput, rows } from "./html";
 import type { Attachment, CollectedDocument, SearchHit, SourceContext, SourceModule } from "./types";
@@ -101,7 +101,7 @@ async function postForm(ctx: SourceContext, url: string, body: URLSearchParams, 
   const response = await ctx.http.request({
     url,
     method: "POST",
-    headers: browserHeaders({
+    headers: requestHeaders({
       "Content-Type": "application/x-www-form-urlencoded",
       ...(referer ? { Referer: referer } : {}),
     }),
@@ -133,7 +133,7 @@ export const koficSource: SourceModule = {
   async load(hit, ctx) {
     const response = await ctx.http.request({
       url: detailUrl(hit.remoteId),
-      headers: browserHeaders(),
+      headers: requestHeaders(),
     });
     if (response.status >= 400) throw new LabsidianError(`상세 페이지를 열지 못했습니다 (${response.status}).`);
     const detail = parseKoficDetail(response.text);
@@ -162,7 +162,7 @@ export const koficSource: SourceModule = {
     const response = await ctx.http.request({
       url: DOWNLOAD_URL,
       method: "POST",
-      headers: browserHeaders({
+      headers: requestHeaders({
         "Content-Type": "application/x-www-form-urlencoded",
         Referer: referer,
       }),

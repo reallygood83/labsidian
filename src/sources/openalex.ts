@@ -1,5 +1,5 @@
 import { LabsidianError } from "../errors";
-import { browserHeaders } from "../http/types";
+import { requestHeaders } from "../http/types";
 import { uniqueAuthors } from "../text";
 import type { CollectedDocument, SearchHit, SourceContext, SourceModule } from "./types";
 
@@ -113,7 +113,7 @@ export const openalexSource: SourceModule = {
     if (ctx.keys.openalex) params.set("api_key", ctx.keys.openalex);
     const response = await ctx.http.request({
       url: `${API}?${params.toString()}`,
-      headers: browserHeaders({ Accept: "application/json" }),
+      headers: requestHeaders({ Accept: "application/json" }),
     });
     let payload: unknown = null;
     try {
@@ -132,7 +132,7 @@ export const openalexSource: SourceModule = {
   async download(attachment, ctx, referer) {
     const response = await ctx.http.request({
       url: attachment.ref.url ?? "",
-      headers: browserHeaders({ Referer: referer, Accept: "application/pdf,*/*" }),
+      headers: requestHeaders({ Referer: referer, Accept: "application/pdf,*/*" }),
     });
     if (response.status >= 400) throw new LabsidianError(`원문 파일을 받지 못했습니다 (${response.status}).`);
     return response.bytes;
@@ -147,7 +147,7 @@ export async function resolveOpenAlexPdf(hit: SearchHit, ctx: SourceContext): Pr
   const suffix = params.size ? `?${params.toString()}` : "";
   const response = await ctx.http.request({
     url: `${API}/${encodeURIComponent(hit.remoteId)}${suffix}`,
-    headers: browserHeaders({ Accept: "application/json" }),
+    headers: requestHeaders({ Accept: "application/json" }),
   });
   if (response.status >= 400) return "";
   try {

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata = {
-  title: "Labsidian 주간 브리핑",
+  title: "Research Shelf 주간 브리핑",
   description: "최근 7일 연구자료를 출처별로 봅니다.",
 };
 

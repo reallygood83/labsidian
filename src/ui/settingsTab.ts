@@ -187,7 +187,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
 
   /**
    * Paste a key, press 저장, see right away whether it works.
-   * The key goes straight into Obsidian's keychain under Labsidian's own name,
+   * The key goes straight into Obsidian's keychain under the plugin's own name,
    * so there is no keychain entry to create or pick first.
    */
   private secretRow(card: HTMLElement, id: string, hint: string, link?: { label: string; url: string }, test?: () => Promise<{ ok: boolean; text: string }>): void {

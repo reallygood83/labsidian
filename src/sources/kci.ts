@@ -1,5 +1,5 @@
 import { LabsidianError } from "../errors";
-import { browserHeaders } from "../http/types";
+import { requestHeaders } from "../http/types";
 import { normalizeDate, uniqueAuthors } from "../text";
 import type { CollectedDocument, SearchHit, SourceModule } from "./types";
 import { xmlText, xmlTexts } from "./xml";
@@ -82,7 +82,7 @@ export const kciSource: SourceModule = {
     });
     const response = await ctx.http.request({
       url: `${API}?${params.toString()}`,
-      headers: browserHeaders({ Accept: "application/xml,text/xml" }),
+      headers: requestHeaders({ Accept: "application/xml,text/xml" }),
     });
     const parsed = parseKciXml(response.text);
     if (response.status >= 400 || parsed.error) {
