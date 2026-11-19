@@ -37,18 +37,24 @@ export async function runJob(session: CollectSession, hit: SearchHit, query: str
       const chosen = files.length === 1 ? files[0] : await deps.choose(files);
       if (chosen?.ref.url) pdfUrl = chosen.ref.url;
       if (chosen) {
-        const bytes = await source.download(chosen, deps.ctx, loaded.hit.url);
-        if (bytes.byteLength > MAX_PDF) throw new Error("PDF가 40MB보다 커서 받지 않았어요.");
-        if (looksLikePdf(bytes)) {
-          session.patch(id, { stage: "convert" });
-          const converted = await pdfToMarkdown(bytes, { title: loaded.hit.title }, (page, pages) => {
-            session.patch(id, { page, pages });
-          });
-          body = converted.markdown;
-          warnings = converted.warnings;
-          converter = converted.converter;
-        } else {
-          warnings = ["받은 파일이 PDF가 아니에요. 본문은 넣지 않았어요."];
+        // A failed PDF step must not lose the note: keep the abstract, details and links.
+        try {
+          const bytes = await source.download(chosen, deps.ctx, loaded.hit.url);
+          if (bytes.byteLength > MAX_PDF) throw new Error("PDF가 40MB보다 커서 받지 않았어요.");
+          if (looksLikePdf(bytes)) {
+            session.patch(id, { stage: "convert" });
+            const converted = await pdfToMarkdown(bytes, { title: loaded.hit.title }, (page, pages) => {
+              session.patch(id, { page, pages });
+            });
+            body = converted.markdown;
+            warnings = converted.warnings;
+            converter = converted.converter;
+          } else {
+            warnings = ["받은 파일이 PDF가 아니에요. 본문은 넣지 않았어요."];
+          }
+        } catch (error) {
+          if (session.isCancelled(id)) return null;
+          warnings = [`PDF 본문을 넣지 못했어요: ${errorText(error)} 초록과 원문 링크만 저장했어요.`];
         }
       }
     }

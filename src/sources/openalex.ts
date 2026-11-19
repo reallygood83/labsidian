@@ -34,9 +34,17 @@ export function openAlexId(raw: string): string {
   return tail.replace(/[^A-Za-z0-9_-]/g, "");
 }
 
-export function parseOpenAlexWorks(payload: unknown): { hits: SearchHit[]; error?: string } {
+export const OPENALEX_QUOTA_MESSAGE =
+  "OpenAlex 무료 한도가 다 찼어요. 키가 없으면 같은 인터넷을 쓰는 사람들과 하루 한도를 나눠 써요. openalex.org에서 무료 키를 받아 설정 → 출처 → OpenAlex에 넣어 주세요.";
+export const OPENALEX_KEY_MESSAGE = "OpenAlex 키가 맞지 않거나 아직 켜지지 않았어요. 메일로 받은 확인 링크를 눌렀는지 보고, 설정 → 출처에서 키를 다시 넣어 주세요.";
+
+export function parseOpenAlexWorks(payload: unknown, status = 200, hasKey = false): { hits: SearchHit[]; error?: string } {
   if (!payload || typeof payload !== "object") return { hits: [], error: "OpenAlex 응답을 읽지 못했습니다." };
-  const record = payload as { error?: unknown; message?: unknown; results?: unknown };
+  const record = payload as { error?: unknown; message?: unknown; reason?: unknown; results?: unknown };
+  if (status === 429 || record.reason === "daily_budget") {
+    return { hits: [], error: hasKey ? "OpenAlex 키의 오늘 한도를 다 썼어요. 한국 시간 오전 9시에 다시 채워져요." : OPENALEX_QUOTA_MESSAGE };
+  }
+  if (status === 401 || status === 403) return { hits: [], error: OPENALEX_KEY_MESSAGE };
   if (typeof record.error === "string" && !Array.isArray(record.results)) {
     const message = typeof record.message === "string" ? record.message : record.error;
     return { hits: [], error: `OpenAlex: ${message}` };
@@ -77,9 +85,9 @@ function pdfUrlOf(work: OpenAlexWork): string {
 export const openalexSource: SourceModule = {
   id: "openalex",
   label: "OpenAlex",
-  blurb: "키 없이 검색됩니다. 무료 키와 메일 주소를 넣으면 하루 한도가 늘어납니다.",
+  blurb: "키 없이도 되지만, 같은 인터넷을 쓰는 사람들과 하루 한도를 나눠 써서 금방 막힐 수 있어요. 무료 키를 넣는 걸 권해요.",
   requiresKey: false,
-  keyHint: "선택 사항입니다. https://openalex.org 에서 무료 키를 받을 수 있습니다.",
+  keyHint: "무료예요. https://openalex.org 에서 메일로 키를 받고, 메일의 확인 링크를 누른 뒤 넣어 주세요.",
   async search(query, ctx) {
     const params = new URLSearchParams({
       search: query,
@@ -96,9 +104,10 @@ export const openalexSource: SourceModule = {
     try {
       payload = JSON.parse(response.text) as unknown;
     } catch {
+      if (response.status === 429) throw new LabsidianError(OPENALEX_QUOTA_MESSAGE);
       throw new LabsidianError(`OpenAlex 응답이 JSON이 아닙니다 (${response.status}).`);
     }
-    const parsed = parseOpenAlexWorks(payload);
+    const parsed = parseOpenAlexWorks(payload, response.status, Boolean(ctx.keys.openalex));
     if (response.status >= 400 || parsed.error) {
       throw new LabsidianError(parsed.error ?? `OpenAlex 요청이 실패했습니다 (${response.status}).`);
     }

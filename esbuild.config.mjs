@@ -111,8 +111,11 @@ const stubs = {
   setup(build) {
     const filter = new RegExp(`^(${optional.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})$`);
     build.onResolve({ filter }, (args) => ({ path: args.path, namespace: "labsidian-stub" }));
-    build.onLoad({ filter: /.*/, namespace: "labsidian-stub" }, () => ({
-      contents: `module.exports = new Proxy({}, { get() { return () => Promise.reject(new Error("Labsidian does not bundle this optional native module.")); } });`,
+    // kordoc loads every optional module lazily inside a promise and falls back when the
+    // import fails. Throw like a missing package does. A Proxy object looked "installed"
+    // but had no real exports, so `mod.PDFiumLibrary.init()` crashed every PDF with large images.
+    build.onLoad({ filter: /.*/, namespace: "labsidian-stub" }, (args) => ({
+      contents: `const error = new Error("Cannot find module '${args.path}' (Labsidian does not bundle this optional native module)"); error.code = "MODULE_NOT_FOUND"; throw error;`,
       loader: "js",
     }));
   },
