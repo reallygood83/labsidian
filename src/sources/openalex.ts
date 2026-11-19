@@ -1,6 +1,6 @@
 import { LabsidianError } from "../errors";
 import { requestHeaders } from "../http/types";
-import { uniqueAuthors } from "../text";
+import { looksLikePdf, uniqueAuthors } from "../text";
 import type { CollectedDocument, SearchHit, SourceContext, SourceModule } from "./types";
 
 const API = "https://api.openalex.org/works";
@@ -19,6 +19,8 @@ interface OpenAlexWork {
   locations?: { pdf_url?: string | null }[] | null;
   open_access?: { oa_url?: string | null; is_oa?: boolean } | null;
   type?: string;
+  has_content?: { pdf?: boolean } | null;
+  content_urls?: { pdf?: string | null } | null;
 }
 
 export function reconstructAbstract(index: Record<string, number[]> | null | undefined): string {
@@ -61,6 +63,7 @@ function workToHit(work: OpenAlexWork): SearchHit | null {
   const short = openAlexId(rawId);
   if (!short || !work.display_name) return null;
   const pdf = pdfUrlOf(work);
+  const cached = contentPdfOf(work);
   const landing = work.primary_location?.landing_page_url || work.doi || rawId;
   return {
     source: "openalex",
@@ -73,8 +76,9 @@ function workToHit(work: OpenAlexWork): SearchHit | null {
     authors: uniqueAuthors((work.authorships ?? []).map((entry) => entry.author?.display_name ?? "")),
     publisher: "OpenAlex",
     keywords: uniqueAuthors((work.keywords ?? []).map((keyword) => keyword.display_name ?? "")).slice(0, 12),
-    hasPdf: Boolean(pdf),
+    hasPdf: Boolean(pdf || cached),
     pdfUrl: pdf,
+    contentPdfUrl: cached,
     abstract: reconstructAbstract(work.abstract_inverted_index),
     series: "",
     docType: work.type || "논문",
@@ -85,6 +89,12 @@ function workToHit(work: OpenAlexWork): SearchHit | null {
  * Only real PDF links count. `open_access.oa_url` is usually the publisher's landing page,
  * which downloads as HTML, so it is used only when it clearly points at a PDF.
  */
+/** OpenAlex keeps its own copy of many open-access PDFs; publishers often refuse non-browser downloads. */
+export function contentPdfOf(work: OpenAlexWork): string {
+  const url = work.has_content?.pdf ? work.content_urls?.pdf ?? "" : "";
+  return /^https:\/\/content\.openalex\.org\//.test(url) ? url : "";
+}
+
 export function pdfUrlOf(work: OpenAlexWork): string {
   const candidates = [
     work.best_oa_location?.pdf_url,
@@ -107,7 +117,7 @@ export const openalexSource: SourceModule = {
     const params = new URLSearchParams({
       search: query,
       "per-page": String(PAGE_SIZE),
-      select: "id,display_name,publication_date,authorships,keywords,abstract_inverted_index,doi,primary_location,best_oa_location,locations,open_access,type",
+      select: "id,display_name,publication_date,authorships,keywords,abstract_inverted_index,doi,primary_location,best_oa_location,locations,open_access,type,has_content,content_urls",
     });
     if (ctx.openalexMailto) params.set("mailto", ctx.openalexMailto);
     if (ctx.keys.openalex) params.set("api_key", ctx.keys.openalex);
@@ -130,12 +140,18 @@ export const openalexSource: SourceModule = {
   },
   load: (hit, ctx) => loadOpenAlex(hit, ctx),
   async download(attachment, ctx, referer) {
-    const response = await ctx.http.request({
-      url: attachment.ref.url ?? "",
-      headers: requestHeaders({ Referer: referer, Accept: "application/pdf,*/*" }),
-    });
-    if (response.status >= 400) throw new LabsidianError(`원문 파일을 받지 못했습니다 (${response.status}).`);
-    return response.bytes;
+    // OpenAlex's cached copy first, then the publisher's link. Publishers often answer
+    // non-browser requests with 403 or an HTML page, which used to leave only the abstract.
+    const tried: string[] = [];
+    for (const url of [attachment.ref.content, attachment.ref.url].filter((item): item is string => Boolean(item))) {
+      const response = await ctx.http.request({
+        url: url.startsWith("https://content.openalex.org/") ? withKey(url, ctx) : url,
+        headers: requestHeaders({ Referer: referer, Accept: "application/pdf,*/*" }),
+      }).catch(() => null);
+      if (response && response.status < 400 && looksLikePdf(response.bytes)) return response.bytes;
+      tried.push(response ? String(response.status) : "연결 실패");
+    }
+    throw new LabsidianError(`원문 PDF를 받지 못했어요 (${tried.join(", ")}). 출판사가 자동 다운로드를 막았을 수 있어요.`);
   },
 };
 
@@ -160,13 +176,22 @@ export async function resolveOpenAlexPdf(hit: SearchHit, ctx: SourceContext): Pr
 
 export async function loadOpenAlex(hit: SearchHit, ctx: SourceContext): Promise<CollectedDocument> {
   // The search result already carries the PDF link; look it up again only for older hits without it.
-  const pdf = hit.pdfUrl || (hit.hasPdf ? await resolveOpenAlexPdf(hit, ctx) : "");
-  const attachments = pdf ? [{ name: `${hit.title}.pdf`, ref: { url: pdf } }] : [];
+  const cached = hit.contentPdfUrl ?? "";
+  const pdf = hit.pdfUrl || (hit.hasPdf && !cached ? await resolveOpenAlexPdf(hit, ctx) : "");
+  // ref.url is the human-readable link written into the note; ref.content needs the key and is only fetched.
+  const attachments = pdf || cached ? [{ name: `${hit.title}.pdf`, ref: { url: pdf, content: cached } }] : [];
   return {
-    hit: { ...hit, hasPdf: Boolean(pdf) },
+    hit: { ...hit, hasPdf: Boolean(pdf || cached) },
     abstract: hit.abstract,
     toc: "",
     attachments,
   };
 }
 
+
+function withKey(url: string, ctx: SourceContext): string {
+  if (!ctx.keys.openalex) return url;
+  const next = new URL(url);
+  next.searchParams.set("api_key", ctx.keys.openalex);
+  return next.toString();
+}

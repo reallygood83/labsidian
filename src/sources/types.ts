@@ -21,6 +21,8 @@ export interface SearchHit {
   docType: string;
   /** Direct PDF link when the search result already knows it (OpenAlex). */
   pdfUrl?: string;
+  /** OpenAlex's own cached copy of the PDF, tried before the publisher's link. */
+  contentPdfUrl?: string;
 }
 
 export interface Attachment {
