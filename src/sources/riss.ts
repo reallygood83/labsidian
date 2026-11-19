@@ -1,5 +1,5 @@
 import { LabsidianError } from "../errors";
-import { browserHeaders } from "../http/types";
+import { requestHeaders } from "../http/types";
 import { normalizeDate, uniqueAuthors } from "../text";
 import type { CollectedDocument, SourceModule } from "./types";
 import { xmlText } from "./xml";
@@ -60,7 +60,7 @@ export const rissSource: SourceModule = {
     });
     const response = await ctx.http.request({
       url: `${API}?${params.toString()}`,
-      headers: browserHeaders({ Accept: "application/xml,text/xml" }),
+      headers: requestHeaders({ Accept: "application/xml,text/xml" }),
     });
     const parsed = parseRissXml(response.text);
     if (response.status >= 400 || parsed.error) {

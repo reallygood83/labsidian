@@ -535,3 +535,7 @@
 .labsidian .lab-key-input::placeholder {
   font-family: var(--lab-font-sans);
 }
+/* Keeps the results area out of the layout so filters, list and footer stay flex children of .lab-search. */
+.labsidian .lab-search-body {
+  display: contents;
+}

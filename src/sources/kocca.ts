@@ -1,5 +1,5 @@
 import { LabsidianError } from "../errors";
-import { browserHeaders } from "../http/types";
+import { requestHeaders } from "../http/types";
 import { collapseWs, normalizeDate, stripTags } from "../text";
 import { rows } from "./html";
 import type { Attachment, CollectedDocument, SearchHit, SourceModule } from "./types";
@@ -74,7 +74,7 @@ export const koccaSource: SourceModule = {
   keyHint: "",
   async search(query, ctx) {
     const url = `${LIST_URL}?menuNo=204153&searchCnd=1&searchWrd=${encodeURIComponent(query)}&pageIndex=1`;
-    const response = await ctx.http.request({ url, headers: browserHeaders() });
+    const response = await ctx.http.request({ url, headers: requestHeaders() });
     if (response.status >= 400) throw new LabsidianError(`한국콘텐츠진흥원 요청이 실패했습니다 (${response.status}).`);
     return parseKoccaList(response.text).map((item) => ({
       source: "kocca" as const,
@@ -93,7 +93,7 @@ export const koccaSource: SourceModule = {
     }));
   },
   async load(hit, ctx) {
-    const response = await ctx.http.request({ url: detailUrl(hit.remoteId), headers: browserHeaders() });
+    const response = await ctx.http.request({ url: detailUrl(hit.remoteId), headers: requestHeaders() });
     if (response.status >= 400) throw new LabsidianError(`상세 페이지를 열지 못했습니다 (${response.status}).`);
     const detail = parseKoccaDetail(response.text, hit.remoteId);
     const next: SearchHit = {
@@ -117,7 +117,7 @@ export const koccaSource: SourceModule = {
     const response = await ctx.http.request({
       url: DOWNLOAD_URL,
       method: "POST",
-      headers: browserHeaders({
+      headers: requestHeaders({
         "Content-Type": "application/x-www-form-urlencoded",
         Referer: referer,
       }),

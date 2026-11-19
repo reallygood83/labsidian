@@ -1,9 +1,9 @@
 {
   "id": "labsidian",
   "name": "Labsidian",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "minAppVersion": "1.11.4",
-  "description": "키워드로 공개 연구자료를 모아 마크다운 노트로 저장합니다.",
+  "description": "Search public research reports by keyword and save them as Markdown notes, with PDF text and figures.",
   "author": "Moon Kim",
   "authorUrl": "https://github.com/reallygood83",
   "isDesktopOnly": true

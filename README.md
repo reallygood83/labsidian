@@ -1,5 +1,11 @@
 # Labsidian
 
+**English summary.** Labsidian searches public research reports by keyword and saves them as Markdown notes in your vault. Sources: Korean Film Council (KOFIC), Korea Creative Content Agency (KOCCA), OpenAlex, and optionally KCI and RISS with your own API key. PDFs are converted to Markdown on your computer with [kordoc](https://github.com/chrisryugj/kordoc), and figures are saved next to the note. Optional AI summaries (Gemini, OpenAI, Anthropic) and an optional Firebase library for teams are off by default. Desktop only.
+
+**Network use.** Search terms go to the sources above. AI summaries send note text to the provider you choose, only when turned on. Cloud and team libraries send notes to your own Firebase project, only when set up. Requests identify themselves as `Labsidian/0.2` in the User-Agent header. API keys are kept in Obsidian's keychain. There is no telemetry.
+
+---
+
 옵시디언에서 키워드로 공개 연구자료를 찾아 마크다운 노트로 저장하는 플러그인입니다. KCI와 RISS는 키를 넣기 전에는 꺼져 있습니다.
 
 라이선스는 MIT입니다. PDF 변환은 [kordoc 4.24.80](https://github.com/chrisryugj/kordoc) (MIT)과 pdfjs-dist (Apache-2.0)를 `main.js` 안에 넣습니다. 윈도우에 Node나 Python을 설치하지 않아도 됩니다.
@@ -53,6 +59,8 @@ Firebase 없이 바로 쓸 수 있습니다. 자세한 설명은 [사용 설명�
 - AI 요약을 켜면 고른 제공자(Gemini, OpenAI, Anthropic)로 요약할 글이 갑니다. 키는 옵시디언 비밀 저장소에 둡니다.
 - 내 클라우드나 팀 서고에 올리면 그 Firebase 프로젝트로 노트 내용이 갑니다.
 - 브리핑 사이트는 브라우저에서 Firestore를 읽습니다. 서비스 계정 키는 쓰지 않습니다.
+- 모든 요청은 User-Agent에 `Labsidian/0.2`라고 밝힙니다. 브라우저인 척하지 않습니다.
+- 사용 통계나 추적 정보는 보내지 않습니다.
 
 ## 누가 볼 수 있나
 
