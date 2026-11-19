@@ -102,7 +102,7 @@ export const openalexSource: SourceModule = {
   label: "OpenAlex",
   blurb: "키 없이도 되지만, 같은 인터넷을 쓰는 사람들과 하루 한도를 나눠 써서 금방 막힐 수 있어요. 무료 키를 넣는 걸 권해요.",
   requiresKey: false,
-  keyHint: "무료예요. https://openalex.org 에서 메일로 키를 받고, 메일의 확인 링크를 누른 뒤 넣어 주세요.",
+  keyHint: "무료예요. 위 링크에서 메일 주소를 넣으면 키가 와요. 메일 속 확인 링크를 누른 뒤 붙여 넣어 주세요.",
   async search(query, ctx) {
     const params = new URLSearchParams({
       search: query,

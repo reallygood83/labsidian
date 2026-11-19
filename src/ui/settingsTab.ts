@@ -8,7 +8,16 @@ import type { SourceId } from "../sources/types";
 import { askConfirm } from "./confirmModal";
 import { setupSteps } from "../../packages/shared/team";
 import { parseFirebaseWebConfig } from "../team/auth";
-import { createSecretField, createSettingGroup } from "../types/obsidian";
+import { createSettingGroup } from "../types/obsidian";
+
+const KEY_LINKS: Partial<Record<string, { label: string; url: string }>> = {
+  openalex: { label: "무료 키 받기", url: "https://openalex.org/settings/api" },
+  kci: { label: "KCI 키 신청", url: "https://www.kci.go.kr" },
+  riss: { label: "RISS 안내", url: "https://www.riss.kr" },
+  gemini: { label: "Gemini 키 받기", url: "https://aistudio.google.com/apikey" },
+  openai: { label: "OpenAI 키 받기", url: "https://platform.openai.com/api-keys" },
+  anthropic: { label: "Anthropic 키 받기", url: "https://console.anthropic.com/settings/keys" },
+};
 
 const FIELD_LABELS: { key: keyof FieldToggles; label: string }[] = [
   { key: "series", label: "series" },
@@ -154,46 +163,122 @@ export class LabsidianSettingTab extends PluginSettingTab {
         });
       });
       card.createEl("p", { cls: "lab-note", text: source.blurb });
-      if (secretId) this.secretRow(card, secretId, source.keyHint);
-      const status = card.createDiv({ cls: "lab-statusline" });
-      const state = !hasKey && needsKey ? t("search.needKey") : source.id === "openalex" && !hasKey ? t("settings.sharedQuota") : t("settings.connected");
-      status.createSpan({ cls: "lab-saved-dot" });
-      status.createSpan({ text: state });
-      const test = card.createEl("button", { cls: "lab-btn", text: t("settings.test") });
-      test.addEventListener("click", () => {
-        void this.plugin.testSource(source.id).then((message) => new Notice(message));
-      });
+      if (secretId) {
+        this.secretRow(card, secretId, source.keyHint, KEY_LINKS[source.id], async () => {
+          const message = await this.plugin.testSource(source.id);
+          const ok = /· \d+건$/.test(message);
+          return { ok, text: ok ? `✓ 키가 맞아요. 시험 검색 ${message.split("· ").pop() ?? ""}이 나왔어요.` : `✗ ${message}` };
+        });
+      }
+      if (!secretId) {
+        const status = card.createDiv({ cls: "lab-statusline" });
+        const state = !hasKey && needsKey ? t("search.needKey") : source.id === "openalex" && !hasKey ? t("settings.sharedQuota") : t("settings.connected");
+        status.createSpan({ cls: "lab-saved-dot" });
+        status.createSpan({ text: state });
+        const test = card.createEl("button", { cls: "lab-btn", text: t("settings.test") });
+        test.addEventListener("click", () => {
+          void this.plugin.testSource(source.id).then((message) => new Notice(message));
+        });
+      }
     }
   }
 
-  private secretRow(card: HTMLElement, id: string, hint: string): void {
-    const host = card.createDiv();
-    const field = createSecretField(this.app, host);
-    if (field) {
-      // The picker shows keychain entries by name; show the one this key points at.
-      const linked = this.plugin.secrets.reference(id);
-      if (linked) field.setValue(linked);
-      field.onChange((value) => {
-        void this.storeSecret(id, value ?? "");
-      });
+  private readonly keyResults = new Map<string, { ok: boolean; text: string }>();
+
+  /**
+   * Paste a key, press 저장, see right away whether it works.
+   * The key goes straight into Obsidian's keychain under Labsidian's own name,
+   * so there is no keychain entry to create or pick first.
+   */
+  private secretRow(card: HTMLElement, id: string, hint: string, link?: { label: string; url: string }, test?: () => Promise<{ ok: boolean; text: string }>): void {
+    const box = card.createDiv({ cls: "lab-key" });
+    if (!this.plugin.secrets.available) {
+      box.createEl("p", { cls: "lab-note", text: "이 옵시디언에서는 키를 저장할 수 없어요. 옵시디언을 1.11.4 이상으로 업데이트해 주세요." });
+      return;
     }
-    if (hint) card.createEl("p", { cls: "lab-note", text: hint });
-    const clear = card.createEl("button", { cls: "lab-btn", text: t("settings.clearKey") });
+    const head = box.createDiv({ cls: "lab-key-head" });
+    const state = head.createSpan({ cls: "lab-key-state", text: "확인 중…" });
+    if (link) {
+      const anchor = head.createEl("a", { cls: "lab-key-link", text: `${link.label} ↗`, href: link.url });
+      anchor.setAttr("target", "_blank");
+      anchor.setAttr("rel", "noopener");
+    }
+    const row = box.createDiv({ cls: "lab-key-row" });
+    const input = row.createEl("input", {
+      cls: "lab-key-input",
+      attr: { type: "password", placeholder: "여기에 키를 붙여 넣으세요", autocomplete: "off", spellcheck: "false" },
+    });
+    const eye = row.createEl("button", { cls: "lab-btn", text: "보기", attr: { type: "button", "aria-label": "키 보기" } });
+    const save = row.createEl("button", { cls: "lab-btn is-primary", text: "저장", attr: { type: "button" } });
+    const clear = row.createEl("button", { cls: "lab-btn", text: "지우기", attr: { type: "button" } });
+    const result = box.createDiv({ cls: "lab-key-result" });
+    const last = this.keyResults.get(id);
+    if (last) {
+      result.setText(last.text);
+      result.toggleClass("is-ok", last.ok);
+      result.toggleClass("is-bad", !last.ok);
+    }
+    if (hint) box.createEl("p", { cls: "lab-note", text: hint });
+
+    void this.plugin.secrets.get(id).then((value) => {
+      if (value) {
+        state.setText(`✓ 저장된 키가 있어요 (끝자리 ${value.slice(-4)})`);
+        state.addClass("is-ok");
+        clear.disabled = false;
+      } else {
+        state.setText("아직 키가 없어요");
+        clear.disabled = true;
+      }
+    });
+
+    eye.addEventListener("click", () => {
+      const hidden = input.type === "password";
+      input.type = hidden ? "text" : "password";
+      eye.setText(hidden ? "숨기기" : "보기");
+    });
+    const submit = async () => {
+      const value = input.value.trim();
+      if (!value) {
+        new Notice("키를 붙여 넣은 뒤 저장을 눌러 주세요.");
+        input.focus();
+        return;
+      }
+      save.disabled = true;
+      save.setText("저장 중…");
+      await this.storeSecret(id, value, false);
+      if (test) {
+        result.setText("연결을 확인하고 있어요…");
+        this.keyResults.set(id, await test());
+      } else {
+        this.keyResults.set(id, { ok: true, text: "저장했어요. 다음 요약부터 이 키를 써요." });
+      }
+      this.display();
+    };
+    save.addEventListener("click", () => void submit());
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        void submit();
+      }
+    });
     clear.addEventListener("click", () => {
+      this.keyResults.delete(id);
       void this.storeSecret(id, "");
     });
   }
 
-  private async storeSecret(id: string, value: string): Promise<void> {
+  private async storeSecret(id: string, value: string, refresh = true): Promise<void> {
     if (!value) {
       await this.plugin.secrets.remove(id);
       if (id === SECRET.kci) this.plugin.settings.sources.kci = false;
       if (id === SECRET.riss) this.plugin.settings.sources.riss = false;
     } else {
       await this.plugin.secrets.set(id, value.trim());
+      if (id === SECRET.kci) this.plugin.settings.sources.kci = true;
+      if (id === SECRET.riss) this.plugin.settings.sources.riss = true;
     }
     await this.plugin.saveSettings();
-    this.display();
+    if (refresh) this.display();
   }
 
   private notes(root: HTMLElement): void {
@@ -243,7 +328,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
       });
     });
     const secretId = SECRET[this.plugin.settings.aiProvider];
-    this.secretRow(group, secretId, "키는 키체인에만 저장해요.");
+    this.secretRow(group, secretId, "키는 옵시디언 키체인에만 저장하고, 설정 파일에는 남기지 않아요.", KEY_LINKS[this.plugin.settings.aiProvider]);
     new Setting(group).setName(t("settings.model")).addText((text) => {
       text.setValue(this.plugin.settings.aiModels[this.plugin.settings.aiProvider]).onChange(async (value) => {
         this.plugin.settings.aiModels[this.plugin.settings.aiProvider] = value.trim();
