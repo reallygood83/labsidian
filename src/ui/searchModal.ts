@@ -39,6 +39,8 @@ export class SearchModal extends Modal {
   private sort: SortMode = "relevance";
   private summarize = false;
   private timer = 0;
+  private input: HTMLInputElement | null = null;
+  private body: HTMLElement | null = null;
   private request = 0;
 
   constructor(app: App, launch: SearchLaunch) {
@@ -54,6 +56,8 @@ export class SearchModal extends Modal {
 
   onClose(): void {
     window.clearTimeout(this.timer);
+    this.input = null;
+    this.body = null;
     this.contentEl.empty();
   }
 
@@ -73,15 +77,28 @@ export class SearchModal extends Modal {
     this.query = this.launch.initialQuery;
     this.paint();
     if (this.query.trim()) void this.runSearch();
-    this.contentEl.querySelector<HTMLInputElement>(".lab-search-input")?.focus();
+    this.input?.focus();
   }
 
+  /**
+   * The search box is built once and never replaced. Rebuilding it on every result
+   * dropped focus mid-typing, so Backspace (and Korean IME composition) stopped
+   * reaching the box. Only the part below the box is redrawn.
+   */
   private paint(): void {
-    const root = this.contentEl;
-    root.empty();
-    root.addClass("labsidian");
-    const shell = root.createDiv({ cls: "lab-search" });
-    this.paintHead(shell);
+    if (!this.body || !this.input) {
+      const root = this.contentEl;
+      root.empty();
+      root.addClass("labsidian");
+      const frame = root.createDiv({ cls: "lab-search" });
+      this.paintHead(frame);
+      this.body = frame.createDiv({ cls: "lab-search-body" });
+    }
+    const input = this.input;
+    const shell = this.body;
+    if (!input || !shell) return;
+    if (input.value !== this.query) input.value = this.query;
+    shell.empty();
     this.paintFilters(shell);
     this.paintBanners(shell);
     const hits = this.visibleHits();
@@ -99,6 +116,7 @@ export class SearchModal extends Modal {
     const head = shell.createDiv({ cls: "lab-search-head" });
     const input = head.createEl("input", { cls: "lab-search-input", attr: { placeholder: t("search.placeholder") } });
     input.value = this.query;
+    this.input = input;
     input.addEventListener("input", () => {
       this.query = input.value;
       window.clearTimeout(this.timer);
