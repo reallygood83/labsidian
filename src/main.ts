@@ -1,4 +1,4 @@
-import { Notice, Plugin, type TFile } from "obsidian";
+import { Notice, Plugin, TFile } from "obsidian";
 import { collectedToday, runJob } from "./collect/run";
 import { batchSummary, findDuplicate } from "./collect/usability";
 import { CollectSession, type JobView } from "./collect/session";
@@ -118,7 +118,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       initialQuery: initialQuery.trim(),
       onOpen: (path) => {
         const file = this.app.vault.getAbstractFileByPath(path);
-        if (file) void this.app.workspace.getLeaf(false).openFile(file as TFile);
+        if (file instanceof TFile) void this.app.workspace.getLeaf(false).openFile(file);
       },
       onRemember: (query) => {
         this.settings.recentQueries = rememberQuery(this.settings, query);
@@ -386,7 +386,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       session,
       (path) => {
         const file = this.app.vault.getAbstractFileByPath(path);
-        if (file) void this.app.workspace.getLeaf(false).openFile(file as TFile);
+        if (file instanceof TFile) void this.app.workspace.getLeaf(false).openFile(file);
       },
       () => {
         const saved = session.jobs.filter((job) => job.stage === "done");
