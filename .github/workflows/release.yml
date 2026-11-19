@@ -1,27 +1,57 @@
 name: Release
 
+# 두 가지로 릴리스해요.
+# 1) 태그(예: 0.2.0)를 직접 올리면 그 태그로 릴리스해요.
+# 2) main에 manifest.json 버전이 바뀐 커밋이 들어오면, 그 버전 태그가 아직 없을 때만 태그와 릴리스를 만들어요.
 on:
   push:
     tags: ["[0-9]+.[0-9]+.[0-9]+"]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   package:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - name: 태그가 manifest 버전과 같은지 확인
-        run: node -e "const version=require('./manifest.json').version; if (process.env.GITHUB_REF_NAME!==version) { console.error('태그는 '+version+' 이어야 해요. v 는 붙이지 않아요.'); process.exit(1); }"
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - uses: softprops/action-gh-release@v2
+      - name: 릴리스할 버전 정하기
+        id: version
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [ "$GITHUB_REF_NAME" != "$VERSION" ]; then
+              echo "태그는 $VERSION 이어야 해요. v 는 붙이지 않아요." >&2
+              exit 1
+            fi
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          elif git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "$VERSION 은 이미 릴리스했어요. 건너뛰어요."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.release == 'true'
+        run: npm ci
+      - if: steps.version.outputs.release == 'true'
+        run: npm test
+      - if: steps.version.outputs.release == 'true'
+        run: npm run build
+      - if: steps.version.outputs.release == 'true'
+        uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: |
             main.js
