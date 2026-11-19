@@ -89,7 +89,7 @@ export function decodePublicConfig(value: string): PublicFirebaseConfig {
 export function buildInviteLinks(config: PublicFirebaseConfig, code: string): { obsidian: string; web: string } {
   const c = encodePublicConfig(config);
   const fragment = `t=${encodeURIComponent(code)}`;
-  const obsidian = `obsidian://labsidian-join?c=${c}#${fragment}`;
+  const obsidian = `obsidian://research-shelf-join?c=${c}#${fragment}`;
   const web = config.briefingUrl
     ? `${config.briefingUrl.replace(/\/$/, "")}/join?c=${c}#${fragment}`
     : "";

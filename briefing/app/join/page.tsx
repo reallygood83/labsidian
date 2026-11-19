@@ -27,15 +27,15 @@ export default function JoinPage() {
 
   return (
     <main className="mx-auto max-w-xl p-8">
-      <p className="text-sm text-lab-text-muted">Labsidian</p>
+      <p className="text-sm text-lab-text-muted">Research Shelf</p>
       <h1 className="text-2xl font-semibold">팀 초대</h1>
       {ready ? (
         <>
           <p className="mt-3">옵시디언에서 링크를 열면 메일과 비밀번호만으로 팀에 들어가요. 설정 파일은 만지지 않아요.</p>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm">
             <li>옵시디언 1.11.4 이상을 설치해요.</li>
-            <li>플러그인 압축을 풀어 <code>.obsidian/plugins/labsidian</code>에 넣어요.</li>
-            <li>설정에서 제한 모드를 끄고 Labsidian을 켜요.</li>
+            <li>플러그인 압축을 풀어 <code>.obsidian/plugins/research-shelf</code>에 넣어요.</li>
+            <li>설정에서 제한 모드를 끄고 Research Shelf를 켜요.</li>
             <li>메일의 인증 링크를 누른 뒤 로그인해요.</li>
           </ol>
           <a className="mt-6 inline-block rounded-lab-m bg-lab-accent px-4 py-2 font-medium text-lab-on-accent" href={obsidian}>

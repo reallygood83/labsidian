@@ -48,7 +48,7 @@ export default async function BriefingPage({ searchParams }: { searchParams: Pro
       <section>
         <header className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm text-lab-text-muted">Labsidian</p>
+            <p className="text-sm text-lab-text-muted">Research Shelf</p>
             <h1 className="text-2xl font-semibold">주간 브리핑 · {rangeLabel(now)}</h1>
             <p className="text-sm text-lab-text-muted">생성 {kstStamp(now)} KST. 로그인 없이 볼 수 있어요.</p>
           </div>

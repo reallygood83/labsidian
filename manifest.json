@@ -1,6 +1,6 @@
 {
-  "id": "labsidian",
-  "name": "Labsidian",
+  "id": "research-shelf",
+  "name": "Research Shelf",
   "version": "0.2.1",
   "minAppVersion": "1.11.4",
   "description": "Search public research reports by keyword and save them as Markdown notes, with PDF text and figures.",

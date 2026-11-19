@@ -115,7 +115,7 @@ const stubs = {
     // import fails. Throw like a missing package does. A Proxy object looked "installed"
     // but had no real exports, so `mod.PDFiumLibrary.init()` crashed every PDF with large images.
     build.onLoad({ filter: /.*/, namespace: "labsidian-stub" }, (args) => ({
-      contents: `const error = new Error("Cannot find module '${args.path}' (Labsidian does not bundle this optional native module)"); error.code = "MODULE_NOT_FOUND"; throw error;`,
+      contents: `const error = new Error("Cannot find module '${args.path}' (Research Shelf does not bundle this optional native module)"); error.code = "MODULE_NOT_FOUND"; throw error;`,
       loader: "js",
     }));
   },

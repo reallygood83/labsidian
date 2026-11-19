@@ -1,7 +1,7 @@
 export default function ModePreviewPage() {
   return (
     <main className="mx-auto max-w-xl p-8">
-      <p className="text-sm text-lab-text-muted">Labsidian 설정</p>
+      <p className="text-sm text-lab-text-muted">Research Shelf 설정</p>
       <h1 className="text-3xl font-semibold">안 됨</h1>
       <p className="mt-2 text-lab-text-muted">혼자 쓰기예요. 노트는 이 볼트에만 있어요.</p>
       <div className="mt-6 flex gap-3">

@@ -17,10 +17,10 @@ export interface HttpClient {
 }
 
 /**
- * Labsidian says who it is instead of posing as a browser, so site operators can
+ * Research Shelf says who it is instead of posing as a browser, so site operators can
  * tell these requests apart and reach the project if something goes wrong.
  */
-export const USER_AGENT = "Labsidian/0.2 (Obsidian research plugin; +https://github.com/reallygood83/labsidian)";
+export const USER_AGENT = "ResearchShelf/0.2 (Obsidian research plugin; +https://github.com/reallygood83/labsidian)";
 
 export function requestHeaders(extra?: Record<string, string>): Record<string, string> {
   return {
