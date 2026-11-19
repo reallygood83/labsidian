@@ -111,13 +111,20 @@ const stubs = {
   setup(build) {
     const filter = new RegExp(`^(${optional.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})$`);
     build.onResolve({ filter }, (args) => ({ path: args.path, namespace: "labsidian-stub" }));
-    // kordoc loads every optional module lazily inside a promise and falls back when the
-    // import fails. Throw like a missing package does. A Proxy object looked "installed"
-    // but had no real exports, so `mod.PDFiumLibrary.init()` crashed every PDF with large images.
-    build.onLoad({ filter: /.*/, namespace: "labsidian-stub" }, (args) => ({
-      contents: `const error = new Error("Cannot find module '${args.path}' (Research Shelf does not bundle this optional native module)"); error.code = "MODULE_NOT_FOUND"; throw error;`,
-      loader: "js",
-    }));
+    // kordoc loads these lazily and falls back when they are missing. A throwing stub is not
+    // enough: esbuild's CommonJS wrapper caches the module before running it, so only the first
+    // require throws and later ones get an empty `{}`. kordoc then called `{}.PDFiumLibrary.init()`
+    // and every PDF with large images failed after the first one in a batch.
+    // So @hyzyla/pdfium gets a real shape whose init() always rejects (kordoc catches that and
+    // skips pdfium); the rest throw on load, and kordoc caches that first failure itself.
+    build.onLoad({ filter: /.*/, namespace: "labsidian-stub" }, (args) => {
+      const missing = `function missing() { const error = new Error("Cannot find module '${args.path}' (Research Shelf does not bundle this optional native module)"); error.code = "MODULE_NOT_FOUND"; return error; }`;
+      const contents =
+        args.path === "@hyzyla/pdfium"
+          ? `${missing}\nmodule.exports = { PDFiumLibrary: { init: () => Promise.reject(missing()) } };`
+          : `${missing}\nthrow missing();`;
+      return { contents, loader: "js" };
+    });
   },
 };
 
