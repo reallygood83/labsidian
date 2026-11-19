@@ -17,6 +17,25 @@ export interface SecretStore {
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
   has(key: string): boolean;
+  /** Name of the keychain entry this key points at, for the picker to show. */
+  reference(key: string): string;
+}
+
+/** Obsidian keychain IDs: lowercase letters, digits and dashes. */
+const SECRET_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * Obsidian's SecretComponent hands back the *name* of the keychain entry the user picked,
+ * not the key itself. We store that name under our own ID and follow it when reading,
+ * so the real key reaches the API. A value that is not a keychain name is used as is.
+ */
+export function resolveSecret(stored: string | null, lookup: (id: string) => string | null, self: string): string | null {
+  if (!stored) return null;
+  if (SECRET_ID.test(stored) && stored !== self) {
+    const linked = lookup(stored);
+    if (linked) return linked.trim();
+  }
+  return stored.trim() || null;
 }
 
 interface StorageLike {
@@ -44,6 +63,9 @@ export function createUnavailableSecrets(): SecretStore {
     has() {
       return false;
     },
+    reference() {
+      return "";
+    },
   };
 }
 
@@ -55,8 +77,7 @@ export function createSecretStore(app: { secretStorage?: unknown }): SecretStore
   return {
     available: true,
     async get(key) {
-      const value = storage.getSecret?.(key) ?? null;
-      return value && value.length > 0 ? value : null;
+      return resolveSecret(storage.getSecret?.(key) ?? null, (id) => storage.getSecret?.(id) ?? null, key);
     },
     async set(key, value) {
       storage.setSecret?.(key, value);
@@ -71,6 +92,10 @@ export function createSecretStore(app: { secretStorage?: unknown }): SecretStore
         return value.length > 0;
       }
       return false;
+    },
+    reference(key) {
+      const value = storage.getSecret?.(key) ?? "";
+      return SECRET_ID.test(value) && value !== key ? value : "";
     },
   };
 }

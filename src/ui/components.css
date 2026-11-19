@@ -444,3 +444,44 @@
   .labsidian .lab-split { grid-template-columns: 1fr; }
   .labsidian .lab-sources { grid-template-columns: 1fr; }
 }
+
+.labsidian .lab-key {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+.labsidian .lab-key-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--lab-size-sm);
+}
+.labsidian .lab-key-state.is-ok,
+.labsidian .lab-key-result.is-ok {
+  color: var(--lab-success);
+}
+.labsidian .lab-key-result.is-bad {
+  color: var(--lab-danger);
+}
+.labsidian .lab-key-result:empty {
+  display: none;
+}
+.labsidian .lab-key-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.labsidian .lab-key-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-family: var(--lab-font-mono);
+}
+.labsidian .lab-key-result {
+  font-size: var(--lab-size-sm);
+}
+.labsidian .lab-key-input::placeholder {
+  font-family: var(--lab-font-sans);
+}

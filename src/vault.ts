@@ -35,17 +35,54 @@ export function notesBySourceId(app: App): Map<string, TFile> {
   return map;
 }
 
-export async function createNote(app: App, folder: string, base: string, markdown: string): Promise<TFile> {
-  const directory = folder.replace(/^\/+|\/+$/g, "");
-  if (directory && !app.vault.getAbstractFileByPath(directory)) {
-    await app.vault.createFolder(directory);
+export interface NoteImage {
+  filename: string;
+  data: Uint8Array;
+}
+
+export const IMAGE_FOLDER = "첨부";
+
+/** Point kordoc's `![image](image_001.png)` placeholders at the saved files as Obsidian embeds. */
+export function linkImages(markdown: string, folder: string, names: ReadonlySet<string>): string {
+  return markdown.replace(/!\[[^\]]*\]\(([^)]+)\)/g, (full, dest: string) => {
+    const name = dest.trim();
+    return names.has(name) ? `![[${folder}/${name}]]` : full;
+  });
+}
+
+async function ensureFolder(app: App, directory: string): Promise<void> {
+  let current = "";
+  for (const part of directory.split("/").filter(Boolean)) {
+    current = current ? `${current}/${part}` : part;
+    if (!app.vault.getAbstractFileByPath(current)) await app.vault.createFolder(current);
   }
+}
+
+export async function createNote(app: App, folder: string, base: string, markdown: string, images: NoteImage[] = []): Promise<TFile> {
+  const directory = folder.replace(/^\/+|\/+$/g, "");
+  if (directory) await ensureFolder(app, directory);
   const stem = sanitizeFileBase(base);
-  let path = normalizePath(`${directory ? `${directory}/` : ""}${stem}.md`);
+  let name = stem;
+  let path = normalizePath(`${directory ? `${directory}/` : ""}${name}.md`);
   let index = 2;
   while (app.vault.getAbstractFileByPath(path)) {
-    path = normalizePath(`${directory ? `${directory}/` : ""}${stem} (${index}).md`);
+    name = `${stem} (${index})`;
+    path = normalizePath(`${directory ? `${directory}/` : ""}${name}.md`);
     index += 1;
   }
-  return app.vault.create(path, markdown);
+  let text = markdown;
+  if (images.length) {
+    const imageDir = normalizePath(`${directory ? `${directory}/` : ""}${IMAGE_FOLDER}/${name}`);
+    await ensureFolder(app, imageDir);
+    const written = new Set<string>();
+    for (const image of images) {
+      const file = sanitizeFileBase(image.filename);
+      const target = normalizePath(`${imageDir}/${file}`);
+      const bytes = image.data.buffer.slice(image.data.byteOffset, image.data.byteOffset + image.data.byteLength) as ArrayBuffer;
+      if (!app.vault.getAbstractFileByPath(target)) await app.vault.createBinary(target, bytes);
+      if (file === image.filename) written.add(image.filename);
+    }
+    text = linkImages(markdown, imageDir, written);
+  }
+  return app.vault.create(path, text);
 }
