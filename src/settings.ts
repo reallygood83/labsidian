@@ -142,7 +142,7 @@ export function mergeSettings(raw: unknown): LabsidianSettings {
     teamName: str(record.teamName, "").trim(),
     codeSalt: str(record.codeSalt, "").trim(),
     briefingUrl: str(record.briefingUrl, "").trim(),
-    recentQueries: stringList(record.recentQueries).slice(0, 8),
+    recentQueries: stringList(record.recentQueries).filter(isWorthRemembering).slice(0, 8),
     lastSyncAt: str(record.lastSyncAt, ""),
     lastSyncCount: int(record.lastSyncCount, 0, 0, 100000),
     tourSeen: record.tourSeen === true,
@@ -183,8 +183,17 @@ export function settingsForDisk(settings: LabsidianSettings): LabsidianSettings 
   return copy;
 }
 
+/** A lone Hangul jamo or a single character is a half-typed word, not a search to keep. */
+export function isWorthRemembering(query: string): boolean {
+  const text = query.trim();
+  if ([...text].length < 2) return false;
+  return !/^[\u3131-\u318E\u1100-\u11FF\s]+$/.test(text);
+}
+
 export function rememberQuery(settings: LabsidianSettings, query: string): string[] {
-  const next = [query, ...settings.recentQueries.filter((item) => item !== query)];
+  const text = query.trim();
+  const kept = settings.recentQueries.filter((item) => item !== text && isWorthRemembering(item));
+  const next = isWorthRemembering(text) ? [text, ...kept] : kept;
   return next.slice(0, 8);
 }
 
