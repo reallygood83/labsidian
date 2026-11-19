@@ -29,3 +29,16 @@ describe("search usability", () => {
     expect(TOUR_STEPS.map((step) => step.title)).toEqual(["예시 검색", "미리보기", "저장", "열기"]);
   });
 });
+
+describe("recent searches", () => {
+  it("keeps whole words and drops half-typed Korean", async () => {
+    const { isWorthRemembering, mergeSettings, rememberQuery } = await import("../src/settings");
+    expect(isWorthRemembering("영화")).toBe(true);
+    expect(isWorthRemembering("movie")).toBe(true);
+    for (const bad of ["ㄱ", "영", "ㅇㅇㅇ", "ㅡㅐ", " "]) expect(isWorthRemembering(bad)).toBe(false);
+    const settings = mergeSettings({ recentQueries: ["ㄱ", "영화", "영", "ㅇㅇㅇ", "ㅇ", "ㅡㅐ", "dudghk", "movie"] });
+    expect(settings.recentQueries).toEqual(["영화", "dudghk", "movie"]);
+    expect(rememberQuery(settings, "ㅎ")).toEqual(["영화", "dudghk", "movie"]);
+    expect(rememberQuery(settings, "영화관")).toEqual(["영화관", "영화", "dudghk", "movie"]);
+  });
+});

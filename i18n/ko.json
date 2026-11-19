@@ -4,13 +4,13 @@
     "share": "이 노트를 팀 서고에 올리기"
   },
   "search": {
-    "placeholder": "키워드를 입력해요",
+    "placeholder": "키워드를 입력하고 Enter를 눌러요",
     "emptyTitle": "무엇을 찾아볼까요?",
-    "emptyHint": "최근 검색을 누르거나 키워드를 입력하면 켜 둔 출처를 찾아요.",
+    "emptyHint": "키워드를 입력하고 Enter를 누르거나, 최근 검색을 눌러요. 켜 둔 출처에서 함께 찾아요.",
     "noResult": "'{query}'로 찾은 자료가 없어요",
     "selected": "{count}개 선택됨",
     "save": "{count}개 노트로 저장",
-    "keys": "↑↓ 이동 · Space 선택 · Esc 닫기",
+    "keys": "Enter 검색 · ↑↓ 이동 · Space 선택 · Esc 닫기",
     "year": "연도",
     "yearAll": "모든 연도",
     "type": "유형",

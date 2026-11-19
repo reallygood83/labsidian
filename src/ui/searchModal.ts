@@ -38,7 +38,8 @@ export class SearchModal extends Modal {
   private pdfOnly = false;
   private sort: SortMode = "relevance";
   private summarize = false;
-  private timer = 0;
+  /** What the results on screen were searched for; the box may already hold the next query. */
+  private searched = "";
   private input: HTMLInputElement | null = null;
   private body: HTMLElement | null = null;
   private request = 0;
@@ -55,7 +56,6 @@ export class SearchModal extends Modal {
   }
 
   onClose(): void {
-    window.clearTimeout(this.timer);
     this.input = null;
     this.body = null;
     this.contentEl.empty();
@@ -102,10 +102,10 @@ export class SearchModal extends Modal {
     this.paintFilters(shell);
     this.paintBanners(shell);
     const hits = this.visibleHits();
-    if (!this.query && this.groups.length === 0 && this.loading.size === 0) {
+    if (!this.searched && this.groups.length === 0 && this.loading.size === 0) {
       this.paintEmpty(shell);
-    } else if (this.query && hits.length === 0 && this.loading.size === 0) {
-      shell.createDiv({ cls: "lab-empty", text: t("search.noResult", { query: this.query }) });
+    } else if (this.searched && hits.length === 0 && this.loading.size === 0) {
+      shell.createDiv({ cls: "lab-empty", text: t("search.noResult", { query: this.searched }) });
     } else {
       this.paintSplit(shell, hits);
     }
@@ -117,12 +117,17 @@ export class SearchModal extends Modal {
     const input = head.createEl("input", { cls: "lab-search-input", attr: { placeholder: t("search.placeholder") } });
     input.value = this.query;
     this.input = input;
+    // Search only on Enter. Searching while typing fired on half-typed Korean
+    // ("ㄱ", "영") and saved those fragments as recent searches.
     input.addEventListener("input", () => {
       this.query = input.value;
-      window.clearTimeout(this.timer);
-      this.timer = window.setTimeout(() => void this.runSearch(), 300);
     });
     input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) {
+        event.preventDefault();
+        void this.runSearch();
+        return;
+      }
       if (event.key === "ArrowDown") {
         event.preventDefault();
         this.move(1);
@@ -304,7 +309,7 @@ export class SearchModal extends Modal {
     const save = right.createEl("button", { cls: "lab-btn is-primary", text: saveButtonLabel(chosen.length) });
     save.disabled = chosen.length === 0;
     save.addEventListener("click", () => {
-      this.launch.onCollect(chosen, this.query, this.summarize);
+      this.launch.onCollect(chosen, this.searched || this.query.trim(), this.summarize);
       this.close();
     });
   }
@@ -331,6 +336,7 @@ export class SearchModal extends Modal {
 
   private async runSearch(): Promise<void> {
     const query = this.query.trim();
+    this.searched = query;
     this.groups = [];
     this.loading = new Set(this.enabled);
     this.paint();
