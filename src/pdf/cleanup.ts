@@ -12,7 +12,7 @@ const PARTICLE =
 const BREAK = "\u0001";
 const SOFT = "\u0002";
 
-export function cleanConvertedMarkdown(markdown: string, hint?: { title?: string }): CleanupResult {
+export function cleanConvertedMarkdown(markdown: string, hint?: { title?: string; keepImages?: ReadonlySet<string> }): CleanupResult {
   const title = hint?.title?.replace(/\s+/g, " ").trim() ?? "";
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   let removedHeaders = 0;
@@ -30,7 +30,7 @@ export function cleanConvertedMarkdown(markdown: string, hint?: { title?: string
     }
     marked.push(line.replace(/[\uE000-\uF8FF]/g, ""));
   }
-  const images = stripLocalImages(marked.join("\n"));
+  const images = stripLocalImages(marked.join("\n"), hint?.keepImages);
   const rejoined = joinAcrossBreaks(images.markdown);
   const collapsed = rejoined.markdown.replace(/\n{3,}/g, "\n\n").trim() + "\n";
   const warnings: string[] = [];
@@ -57,10 +57,12 @@ function isFurniture(line: string, title: string): boolean {
   return false;
 }
 
-function stripLocalImages(markdown: string): { markdown: string; removed: number } {
+function stripLocalImages(markdown: string, keep?: ReadonlySet<string>): { markdown: string; removed: number } {
   let removed = 0;
   const next = markdown.replace(/!\[[^\]]*\]\(([^)]+)\)/g, (full, dest: string) => {
     if (/^https?:\/\//i.test(dest.trim())) return full;
+    // Pictures we save into the vault keep their place; the note writer points them at the file.
+    if (keep?.has(dest.trim())) return `\n${full}\n`;
     removed += 1;
     return "";
   });

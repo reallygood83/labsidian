@@ -30,6 +30,7 @@ export interface LabsidianSettings {
   aiModels: Record<AiProvider, string>;
   sendFullText: boolean;
   excerptChars: number;
+  saveImages: boolean;
   dailySummaryLimit: number;
   summaryCountDate: string;
   summaryCount: number;
@@ -84,6 +85,7 @@ export const DEFAULT_SETTINGS: LabsidianSettings = {
   sendFullText: false,
   excerptChars: 6000,
   dailySummaryLimit: 20,
+  saveImages: true,
   summaryCountDate: "",
   summaryCount: 0,
   libraryMode: "solo",
@@ -124,6 +126,7 @@ export function mergeSettings(raw: unknown): LabsidianSettings {
     aiProvider,
     sendFullText: record.sendFullText === true,
     excerptChars: int(record.excerptChars, 6000, 500, 80000),
+    saveImages: record.saveImages !== false,
     dailySummaryLimit: int(record.dailySummaryLimit, 20, 0, 500),
     summaryCountDate: str(record.summaryCountDate, ""),
     summaryCount: int(record.summaryCount, 0, 0, 100000),

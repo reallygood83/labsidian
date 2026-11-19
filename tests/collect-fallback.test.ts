@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { runJob } from "../src/collect/run";
+import { dropMissingImages, runJob } from "../src/collect/run";
+import { cleanConvertedMarkdown } from "../src/pdf/cleanup";
 import { CollectSession, type JobView } from "../src/collect/session";
 import { mergeSettings } from "../src/settings";
 import { parseOpenAlexWorks, OPENALEX_QUOTA_MESSAGE } from "../src/sources/openalex";
@@ -59,5 +60,18 @@ describe("OpenAlex quota", () => {
   });
   it("points to the key when it is rejected", () => {
     expect(parseOpenAlexWorks({ error: "Forbidden" }, 403, true).error).toContain("키");
+  });
+});
+
+describe("PDF pictures", () => {
+  it("keeps placeholders for pictures that will be saved", () => {
+    const cleaned = cleanConvertedMarkdown("본문입니다.\n\n![image](image_001.png)\n\n![image](image_002.png)\n", { keepImages: new Set(["image_001.png"]) });
+    expect(cleaned.markdown).toContain("![image](image_001.png)");
+    expect(cleaned.markdown).not.toContain("image_002.png");
+  });
+  it("drops placeholders beyond the saved set", () => {
+    const text = dropMissingImages("가\n![image](image_001.png)\n나\n![image](image_009.png)\n", new Set(["image_001.png"]));
+    expect(text).toContain("image_001.png");
+    expect(text).not.toContain("image_009.png");
   });
 });

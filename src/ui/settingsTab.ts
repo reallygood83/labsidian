@@ -209,6 +209,15 @@ export class LabsidianSettingTab extends PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
+    new Setting(group)
+      .setName("PDF 그림 저장")
+      .setDesc("PDF 속 그림·도표를 노트 폴더의 첨부 폴더에 PNG로 저장하고 본문 자리에 붙여요. 끄면 글만 저장해요.")
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.saveImages).onChange(async (value) => {
+          this.plugin.settings.saveImages = value;
+          await this.plugin.saveSettings();
+        });
+      });
     new Setting(group).setName(t("settings.fields")).setHeading();
     for (const field of FIELD_LABELS) {
       new Setting(group).setName(field.label).addToggle((toggle) => {

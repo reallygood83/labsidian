@@ -423,8 +423,8 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       ctx: this.context(keys),
       settings: this.settings,
       choose,
-      write: async (folder, filename, markdown) => {
-        const file = await createNote(this.app, folder, filename, markdown);
+      write: async (folder, filename, markdown, images) => {
+        const file = await createNote(this.app, folder, filename, markdown, images);
         return file.path;
       },
       summaryKey,
@@ -493,7 +493,8 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
         if (!file) continue;
         const raw = await this.app.vault.read(file);
         const front = this.app.metadataCache.getFileCache(file)?.frontmatter ?? {};
-        const body = raw.replace(/^---[\s\S]*?---\r?\n?/, "");
+        // Pictures stay in the vault; the briefing cannot open vault embeds, so leave a marker.
+        const body = raw.replace(/^---[\s\S]*?---\r?\n?/, "").replace(/!\[\[[^\]\n]+\.(?:png|jpe?g|webp|gif)\]\]/gi, "*(그림은 올린 사람의 볼트에 있어요)*");
         let note: ResearchNote = {
           title: String(front.title ?? file.basename),
           series: String(front.series ?? ""),
