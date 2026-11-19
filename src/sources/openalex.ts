@@ -15,6 +15,8 @@ interface OpenAlexWork {
   abstract_inverted_index?: Record<string, number[]> | null;
   doi?: string | null;
   primary_location?: { landing_page_url?: string | null; pdf_url?: string | null } | null;
+  best_oa_location?: { landing_page_url?: string | null; pdf_url?: string | null } | null;
+  locations?: { pdf_url?: string | null }[] | null;
   open_access?: { oa_url?: string | null; is_oa?: boolean } | null;
   type?: string;
 }
@@ -58,7 +60,7 @@ function workToHit(work: OpenAlexWork): SearchHit | null {
   const rawId = work.id ?? "";
   const short = openAlexId(rawId);
   if (!short || !work.display_name) return null;
-  const oaUrl = work.open_access?.oa_url ?? work.primary_location?.pdf_url ?? "";
+  const pdf = pdfUrlOf(work);
   const landing = work.primary_location?.landing_page_url || work.doi || rawId;
   return {
     source: "openalex",
@@ -71,15 +73,28 @@ function workToHit(work: OpenAlexWork): SearchHit | null {
     authors: uniqueAuthors((work.authorships ?? []).map((entry) => entry.author?.display_name ?? "")),
     publisher: "OpenAlex",
     keywords: uniqueAuthors((work.keywords ?? []).map((keyword) => keyword.display_name ?? "")).slice(0, 12),
-    hasPdf: Boolean(oaUrl),
+    hasPdf: Boolean(pdf),
+    pdfUrl: pdf,
     abstract: reconstructAbstract(work.abstract_inverted_index),
     series: "",
     docType: work.type || "논문",
   };
 }
 
-function pdfUrlOf(work: OpenAlexWork): string {
-  return work.open_access?.oa_url || work.primary_location?.pdf_url || "";
+/**
+ * Only real PDF links count. `open_access.oa_url` is usually the publisher's landing page,
+ * which downloads as HTML, so it is used only when it clearly points at a PDF.
+ */
+export function pdfUrlOf(work: OpenAlexWork): string {
+  const candidates = [
+    work.best_oa_location?.pdf_url,
+    work.primary_location?.pdf_url,
+    ...(work.locations ?? []).map((location) => location.pdf_url),
+  ];
+  const direct = candidates.find((url): url is string => typeof url === "string" && /^https?:\/\//i.test(url));
+  if (direct) return direct;
+  const oa = work.open_access?.oa_url ?? "";
+  return /\.pdf(?:$|[?#])/i.test(oa) ? oa : "";
 }
 
 export const openalexSource: SourceModule = {
@@ -92,7 +107,7 @@ export const openalexSource: SourceModule = {
     const params = new URLSearchParams({
       search: query,
       "per-page": String(PAGE_SIZE),
-      select: "id,display_name,publication_date,authorships,keywords,abstract_inverted_index,doi,primary_location,open_access,type",
+      select: "id,display_name,publication_date,authorships,keywords,abstract_inverted_index,doi,primary_location,best_oa_location,locations,open_access,type",
     });
     if (ctx.openalexMailto) params.set("mailto", ctx.openalexMailto);
     if (ctx.keys.openalex) params.set("api_key", ctx.keys.openalex);
@@ -113,10 +128,7 @@ export const openalexSource: SourceModule = {
     }
     return parsed.hits.map((hit) => ({ ...hit, keywords: hit.keywords }));
   },
-  async load(hit) {
-    const response = await hitContext(hit);
-    return response;
-  },
+  load: (hit, ctx) => loadOpenAlex(hit, ctx),
   async download(attachment, ctx, referer) {
     const response = await ctx.http.request({
       url: attachment.ref.url ?? "",
@@ -127,14 +139,6 @@ export const openalexSource: SourceModule = {
   },
 };
 
-async function hitContext(hit: SearchHit): Promise<CollectedDocument> {
-  const oa = hit.hasPdf ? hit.url : "";
-  const attachments = oa
-    ? [{ name: `${hit.remoteId}.pdf`, ref: { url: "" } }]
-    : [];
-  return { hit, abstract: hit.abstract, toc: "", attachments };
-}
-
 /** Detail is already on the search hit. PDF URL is recovered by a second lightweight lookup when downloading. */
 export async function resolveOpenAlexPdf(hit: SearchHit, ctx: SourceContext): Promise<string> {
   const params = new URLSearchParams();
@@ -142,7 +146,7 @@ export async function resolveOpenAlexPdf(hit: SearchHit, ctx: SourceContext): Pr
   if (ctx.keys.openalex) params.set("api_key", ctx.keys.openalex);
   const suffix = params.size ? `?${params.toString()}` : "";
   const response = await ctx.http.request({
-    url: `${API}/https://openalex.org/${hit.remoteId}${suffix}`,
+    url: `${API}/${encodeURIComponent(hit.remoteId)}${suffix}`,
     headers: browserHeaders({ Accept: "application/json" }),
   });
   if (response.status >= 400) return "";
@@ -155,7 +159,8 @@ export async function resolveOpenAlexPdf(hit: SearchHit, ctx: SourceContext): Pr
 }
 
 export async function loadOpenAlex(hit: SearchHit, ctx: SourceContext): Promise<CollectedDocument> {
-  const pdf = hit.hasPdf ? await resolveOpenAlexPdf(hit, ctx) : "";
+  // The search result already carries the PDF link; look it up again only for older hits without it.
+  const pdf = hit.pdfUrl || (hit.hasPdf ? await resolveOpenAlexPdf(hit, ctx) : "");
   const attachments = pdf ? [{ name: `${hit.title}.pdf`, ref: { url: pdf } }] : [];
   return {
     hit: { ...hit, hasPdf: Boolean(pdf) },
@@ -165,4 +170,3 @@ export async function loadOpenAlex(hit: SearchHit, ctx: SourceContext): Promise<
   };
 }
 
-openalexSource.load = loadOpenAlex;

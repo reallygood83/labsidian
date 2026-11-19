@@ -19,6 +19,8 @@ export interface SearchHit {
   abstract: string;
   series: string;
   docType: string;
+  /** Direct PDF link when the search result already knows it (OpenAlex). */
+  pdfUrl?: string;
 }
 
 export interface Attachment {

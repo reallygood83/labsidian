@@ -69,6 +69,21 @@ describe("OpenAlex", () => {
     expect(parsed.hits[0]?.hasPdf).toBe(true);
     expect(parsed.hits[0]?.authors).toEqual(["Ada Lovelace"]);
   });
+
+  it("does not call a landing page a PDF", () => {
+    const work = {
+      id: "https://openalex.org/W2",
+      display_name: "Landing only",
+      primary_location: { landing_page_url: "https://doi.org/10.1/x", pdf_url: null },
+      best_oa_location: { landing_page_url: "https://doi.org/10.1/x", pdf_url: null },
+      open_access: { oa_url: "https://doi.org/10.1/x", is_oa: true },
+    };
+    expect(parseOpenAlexWorks({ results: [work] }).hits[0]?.hasPdf).toBe(false);
+    const withPdf = { ...work, locations: [{ pdf_url: null }, { pdf_url: "https://arxiv.org/pdf/1.pdf" }] };
+    const hit = parseOpenAlexWorks({ results: [withPdf] }).hits[0];
+    expect(hit?.hasPdf).toBe(true);
+    expect(hit?.pdfUrl).toBe("https://arxiv.org/pdf/1.pdf");
+  });
 });
 
 describe("KCI", () => {

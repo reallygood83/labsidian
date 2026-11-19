@@ -170,8 +170,9 @@ export class LabsidianSettingTab extends PluginSettingTab {
     const host = card.createDiv();
     const field = createSecretField(this.app, host);
     if (field) {
-      const current = this.plugin.secrets.has(id);
-      if (current) field.setValue("••••");
+      // The picker shows keychain entries by name; show the one this key points at.
+      const linked = this.plugin.secrets.reference(id);
+      if (linked) field.setValue(linked);
       field.onChange((value) => {
         void this.storeSecret(id, value ?? "");
       });
@@ -188,8 +189,8 @@ export class LabsidianSettingTab extends PluginSettingTab {
       await this.plugin.secrets.remove(id);
       if (id === SECRET.kci) this.plugin.settings.sources.kci = false;
       if (id === SECRET.riss) this.plugin.settings.sources.riss = false;
-    } else if (value !== "••••") {
-      await this.plugin.secrets.set(id, value);
+    } else {
+      await this.plugin.secrets.set(id, value.trim());
     }
     await this.plugin.saveSettings();
     this.display();
