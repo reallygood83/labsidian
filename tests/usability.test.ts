@@ -42,3 +42,13 @@ describe("recent searches", () => {
     expect(rememberQuery(settings, "영화관")).toEqual(["영화관", "영화", "dudghk", "movie"]);
   });
 });
+
+describe("what a search sends", () => {
+  it("needs a finished word", async () => {
+    const { searchableQuery } = await import("../src/settings");
+    for (const bad of ["ㄱ", "영", "ㅇㅇ", "  ", "a", "ㄱㄴ "]) expect(searchableQuery(bad)).toBe("");
+    expect(searchableQuery("영화")).toBe("영화");
+    expect(searchableQuery(" 영화ㄱ")).toBe("영화");
+    expect(searchableQuery("AI 교육")).toBe("AI 교육");
+  });
+});
