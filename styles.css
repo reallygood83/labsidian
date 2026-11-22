@@ -535,7 +535,11 @@
 .labsidian .lab-key-input::placeholder {
   font-family: var(--lab-font-sans);
 }
-/* Keeps the results area out of the layout so filters, list and footer stay flex children of .lab-search. */
+/* The results area below the search box lays out its children like .lab-search does. */
 .labsidian .lab-search-body {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-3);
+  flex: 1 1 auto;
+  min-height: 0;
 }

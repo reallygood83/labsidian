@@ -13,6 +13,20 @@ for (const [name, ok] of checks) {
     process.exit(1);
   }
 }
+// Patterns the Obsidian community scanner flags. esbuild.config.mjs replaces their sources.
+const flagged = [
+  ['createElement("script")', "injects script elements"],
+  ['require("child_process")', "can run shell commands"],
+  ['require("fs")', "reads files outside the vault API"],
+  ['require("fs/promises")', "reads files outside the vault API"],
+  ["new Function(", "generates code at runtime"],
+];
+for (const [pattern, why] of flagged) {
+  if (code.includes(pattern)) {
+    console.error(`bundle contains ${pattern} (${why})`);
+    process.exit(1);
+  }
+}
 if (code.includes("BEGIN PRIVATE KEY") || code.includes("sk-live")) {
   console.error("bundle contains a secret-like string");
   process.exit(1);

@@ -128,6 +128,44 @@ const stubs = {
   },
 };
 
+// Small replacements that keep the bundle free of code the community scanner flags.
+// - immediate / setimmediate: old setImmediate polyfills pulled in by jszip. They inject <script>
+//   elements and use new Function as fallbacks; Electron already has setImmediate.
+// - child_process / fs: kordoc imports them for features Research Shelf never calls (other
+//   document formats, OCR model files, file paths). PDF conversion works on bytes in memory and
+//   notes go through the vault API, so any real use fails loudly instead of touching the disk.
+const SHIMS = {
+  immediate: `module.exports = function immediate(task) { (typeof setImmediate === "function" ? setImmediate : setTimeout)(task, 0); };`,
+  setimmediate: `if (typeof globalThis.setImmediate !== "function") { globalThis.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args); globalThis.clearImmediate = clearTimeout; }`,
+};
+const shims = {
+  name: "research-shelf-shims",
+  setup(build) {
+    build.onResolve({ filter: /^(immediate|setimmediate)$/ }, (args) => ({ path: args.path, namespace: "rs-shim" }));
+    build.onLoad({ filter: /.*/, namespace: "rs-shim" }, (args) => ({ contents: SHIMS[args.path], loader: "js" }));
+    // pdfjs compiles some PDF functions with new Function when it can; when that throws it
+    // falls back to its interpreter, so dynamic code generation can be switched off safely.
+    build.onLoad({ filter: /pdfjs-dist[\\/]legacy[\\/]build[\\/]pdf(\.worker)?\.mjs$/ }, async (args) => {
+      const raw = await readFile(args.path, "utf8");
+      const contents = raw.replace(/\bnew Function\(/g, "__rsNoDynamicCode(");
+      const prelude = `function __rsNoDynamicCode() { throw new Error("dynamic code is disabled"); }\n`;
+      return { contents: prelude + contents, loader: "js", resolveDir: path.dirname(args.path) };
+    });
+    build.onResolve({ filter: /^(node:)?(child_process|fs|fs\/promises)$/ }, (args) => ({
+      path: args.path.replace(/^node:/, ""),
+      namespace: "rs-disabled",
+    }));
+    build.onLoad({ filter: /.*/, namespace: "rs-disabled" }, (args) => ({
+      contents: `const name = ${JSON.stringify(args.path)};
+function blocked() { throw new Error(name + " is not available in Research Shelf"); }
+const handler = { get: (_target, key) => (key === "__esModule" ? false : key === "default" ? stub : key === "promises" || key === "constants" ? stub : blocked), apply: blocked };
+const stub = new Proxy(function () {}, handler);
+module.exports = stub;`,
+      loader: "js",
+    }));
+  },
+};
+
 await esbuild.build({
   entryPoints: ["src/main.ts"],
   bundle: true,
@@ -136,7 +174,7 @@ await esbuild.build({
   target: "es2022",
   platform: "node",
   external: ["obsidian", "electron", ...builtinModules, ...builtinModules.map((name) => `node:${name}`)],
-  plugins: [pdfAssets, stubs],
+  plugins: [shims, pdfAssets, stubs],
   define: { "import.meta.url": "__labsidianImportMetaUrl" },
   banner: {
     js: `const __labsidianImportMetaUrl = typeof __filename === "string" ? require("url").pathToFileURL(__filename).href : "file:///labsidian/main.js";`,

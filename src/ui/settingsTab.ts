@@ -383,7 +383,7 @@ export class LabsidianSettingTab extends PluginSettingTab {
     const box = group.createEl("textarea", { cls: "lab-search-input", attr: { rows: "4" } });
     box.placeholder = '{"apiKey":"","projectId":""}';
     const check = group.createEl("button", { cls: "lab-btn", text: t("settings.firebaseCheck") });
-    check.addEventListener("click", async () => {
+    const checkConfig = async (): Promise<void> => {
       try {
         const parsed = parseFirebaseWebConfig(box.value);
         this.plugin.settings.firebaseProjectId = parsed.projectId;
@@ -394,7 +394,8 @@ export class LabsidianSettingTab extends PluginSettingTab {
       } catch (error) {
         new Notice(error instanceof Error ? error.message : "설정을 확인하지 못했어요.");
       }
-    });
+    };
+    check.addEventListener("click", () => void checkConfig());
     new Setting(group).setName("이메일").addText((text) => {
       text.setValue(this.plugin.settings.firebaseEmail).onChange(async (value) => {
         this.plugin.settings.firebaseEmail = value.trim();
