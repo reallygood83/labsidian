@@ -190,6 +190,15 @@ export function isWorthRemembering(query: string): boolean {
   return !/^[\u3131-\u318E\u1100-\u11FF\s]+$/.test(text);
 }
 
+/**
+ * The text a search actually sends: trailing half-typed jamo dropped ("영화ㄱ" → "영화"),
+ * or "" when nothing searchable is left ("ㄱ", "영" alone, a single letter).
+ */
+export function searchableQuery(query: string): string {
+  const text = query.trim().replace(/[\u3131-\u318E\u1100-\u11FF]+$/, "").trim();
+  return isWorthRemembering(text) ? text : "";
+}
+
 export function rememberQuery(settings: LabsidianSettings, query: string): string[] {
   const text = query.trim();
   const kept = settings.recentQueries.filter((item) => item !== text && isWorthRemembering(item));

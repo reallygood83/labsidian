@@ -2,7 +2,7 @@ import { Modal, type App } from "obsidian";
 import { formatDotDate, t } from "../i18n";
 import type { SecretStore } from "../secrets";
 import { SECRET } from "../secrets";
-import type { LabsidianSettings } from "../settings";
+import { searchableQuery, type LabsidianSettings } from "../settings";
 import { searchSources } from "../sources/search";
 import { SOURCES } from "../sources/registry";
 import type { HttpClient } from "../http/types";
@@ -40,6 +40,7 @@ export class SearchModal extends Modal {
   private summarize = false;
   /** What the results on screen were searched for; the box may already hold the next query. */
   private searched = "";
+  private hint = "";
   private input: HTMLInputElement | null = null;
   private body: HTMLElement | null = null;
   private request = 0;
@@ -101,6 +102,7 @@ export class SearchModal extends Modal {
     shell.empty();
     this.paintFilters(shell);
     this.paintBanners(shell);
+    if (this.hint) shell.createDiv({ cls: "lab-note lab-search-hint", text: this.hint });
     const hits = this.visibleHits();
     if (!this.searched && this.groups.length === 0 && this.loading.size === 0) {
       this.paintEmpty(shell);
@@ -121,6 +123,10 @@ export class SearchModal extends Modal {
     // ("ㄱ", "영") and saved those fragments as recent searches.
     input.addEventListener("input", () => {
       this.query = input.value;
+      if (this.hint) {
+        this.hint = "";
+        this.body?.querySelector(".lab-search-hint")?.remove();
+      }
     });
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) {
@@ -335,7 +341,16 @@ export class SearchModal extends Modal {
   }
 
   private async runSearch(): Promise<void> {
-    const query = this.query.trim();
+    // Every path (Enter, source chips, recent searches, retry) comes through here,
+    // so a lone consonant or one letter never reaches the sources.
+    const query = searchableQuery(this.query);
+    if (this.query.trim() && !query) {
+      this.hint = "단어를 끝까지 입력한 뒤 Enter를 눌러 주세요. 두 글자 이상이면 검색해요.";
+      this.paint();
+      this.input?.focus();
+      return;
+    }
+    this.hint = "";
     this.searched = query;
     this.groups = [];
     this.loading = new Set(this.enabled);

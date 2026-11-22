@@ -1,6 +1,6 @@
 {
   "name": "research-shelf",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Search public research reports by keyword and save them as Markdown notes, with PDF text and figures.",
   "main": "main.js",
   "scripts": {
