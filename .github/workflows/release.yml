@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   package:
@@ -46,6 +48,14 @@ jobs:
         run: npm test
       - if: steps.version.outputs.release == 'true'
         run: npm run build
+      # Lets anyone verify that the released files were built from this repository.
+      - if: steps.version.outputs.release == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
       - if: steps.version.outputs.release == 'true'
         uses: softprops/action-gh-release@v2
         with:

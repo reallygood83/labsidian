@@ -558,7 +558,7 @@ export default class LabsidianPlugin extends Plugin implements LabsidianHost {
       const briefing = this.settings.briefingUrl;
       const notice = new Notice(t("upload.done", { count }));
       if (briefing) {
-        const button = notice.noticeEl.createEl("button", { text: t("upload.viewBriefing") });
+        const button = notice.messageEl.createEl("button", { text: t("upload.viewBriefing") });
         button.addEventListener("click", () => window.open(briefing));
       }
     } catch (error) {

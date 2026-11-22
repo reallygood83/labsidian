@@ -129,7 +129,7 @@ export class SearchModal extends Modal {
       }
     });
     input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) {
+      if (event.key === "Enter" && !event.isComposing) {
         event.preventDefault();
         void this.runSearch();
         return;
